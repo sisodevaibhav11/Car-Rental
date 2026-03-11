@@ -3,6 +3,7 @@ import Booking from "../models/Booking.js";
 import Car from "../models/Car.js";
 import User from "../models/user.js";
 import fs from "fs";
+import { syncCarsAvailabilityState } from "../utils/carAvailability.js";
 
 // API to change role from user to owner
 export const changeRoleToOwner = async (req, res) => {
@@ -86,6 +87,7 @@ export const addCar = async (req, res) => {
 export const getOwnerCars = async (req, res) => {
   try {
     const { _id } = req.user;
+    await syncCarsAvailabilityState({ owner: _id });
     const cars = await Car.find({ owner: _id });
     res.json({ success: true, cars });
   } catch (error) {
@@ -100,6 +102,10 @@ export const toggleCarAvailability = async (req, res) => {
     const { _id } = req.user;
     const { carId } = req.body;
     const car = await Car.findById(carId);
+
+    if (!car) {
+      return res.status(404).json({ success: false, message: "Car not found" });
+    }
 
     //checking is car belong to the user
     if (car.owner.toString() !== _id.toString()) {
@@ -122,6 +128,10 @@ export const deleteCar = async (req, res) => {
     const { carId } = req.body;
     const car = await Car.findById(carId);
 
+    if (!car) {
+      return res.status(404).json({ success: false, message: "Car not found" });
+    }
+
     //checking is car belong to the user
     if (car.owner.toString() !== _id.toString()) {
       return res.json({ success: false, message: "Unauthorized" });
@@ -141,29 +151,29 @@ export const deleteCar = async (req, res) => {
 export const getDashboardData = async (req, res) => {
   try {
     const { _id, role } = req.user;
-    const { carId } = req.body;
-    const car = await Car.findById(carId);
 
-    //checking is car belong to the user
     if (role !== "owner") {
       return res.json({ success: false, message: "Unauthorized" });
     }
 
     const cars = await Car.find({ owner: _id });
-    const booking = (await Booking.find({ owner: _id }).populate('car')).sort({ created: -1 })
-    const pendingBookings = await Booking.find({ owner: _id, status: "pending" })
-    const completedBookings = await Booking.find({ owner: _id, status: "confirmed" })
+    const carIds = cars.map((car) => car._id);
+    const bookings = await Booking.find({ car: { $in: carIds } })
+      .populate("car")
+      .sort({ createdAt: -1 });
+    const pendingBookings = bookings.filter((booking) => booking.status === "pending");
+    const completedBookings = bookings.filter((booking) => booking.status === "confirmed");
 
 
     //calculate monthly revenue from booking where status is confirmed
-    const monthlyRevenue = booking.slice().filter(booking => booking.status === 'confirmed').reduce((acc, booking) => acc + booking.price, 0)
+    const monthlyRevenue = completedBookings.reduce((acc, booking) => acc + booking.price, 0);
 
     const dashboardData = {
       totalCars: cars.length,
-      totalBookings: booking.length,
+      totalBookings: bookings.length,
       pendingBookings: pendingBookings.length,
       completedBookings: completedBookings.length,
-      recentBooking: booking.slice(0, 3),
+      recentBookings: bookings.slice(0, 3),
       monthlyRevenue
     }
 

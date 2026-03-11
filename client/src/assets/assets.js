@@ -33,6 +33,7 @@ import location_icon_colored from "./location_icon_colored.svg"
 import testimonial_image_1 from "./testimonial_image_1.png"
 import testimonial_image_2 from "./testimonial_image_2.png"
 import main_car from "./main_car.png"
+import hero_all_exotic_vehicles from "./hero_all_exotic_vehicles.avif"
 import banner_car_image from "./banner_car_image.png"
 import user_profile from "./user_profile.png"
 import upload_icon from "./upload_icon.svg"
@@ -79,6 +80,7 @@ export const assets = {
     testimonial_image_1,
     testimonial_image_2,
     main_car,
+    hero_all_exotic_vehicles,
     banner_car_image,
     car_image1,
     upload_icon,

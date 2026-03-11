@@ -1,20 +1,30 @@
 import User from "../models/user.js";
+import Car from "../models/Car.js";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
+import { syncCarsAvailabilityState } from "../utils/carAvailability.js";
 
 
 const generateToken = (userId) => {
-    const payload = userId;
-    return jwt.sign(payload, process.env.JWT_SECRET)
+    if (!process.env.JWT_SECRET) {
+        throw new Error("JWT_SECRET is missing");
+    }
+    return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" })
 }
 
 //registeruser
 export const registerUser = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const name = req.body?.name?.trim();
+        const email = req.body?.email?.trim().toLowerCase();
+        const password = req.body?.password;
 
-        if (!name || !email || !password || password.length < 8) {
-            return res.json({ success: false, message: 'Fill all the fields' })
+        if (!name || !email || !password) {
+            return res.json({ success: false, message: 'Name, email and password are required' })
+        }
+
+        if (password.length < 8) {
+            return res.json({ success: false, message: 'Password must be at least 8 characters' })
         }
 
         const userExists = await User.findOne({ email })
@@ -36,7 +46,12 @@ export const registerUser = async (req, res) => {
 //login user
 export const loginUser = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const email = req.body?.email?.trim().toLowerCase();
+        const password = req.body?.password;
+        if (!email || !password) {
+            return res.json({ success: false, message: 'Email and password are required' })
+        }
+
         const user = await User.findOne({ email })
         if (!user) {
             return res.json({ success: false, message: "User not found" })
@@ -64,6 +79,19 @@ export const getUserData=async(req,res)=>{
     }
     catch(error)
     {
+        console.log(error.message);
+        res.json({success:false,message:error.message})
+    }
+}
+
+//get all cars from frontend
+export const getCars=async(req,res)=>{
+    try{
+        await syncCarsAvailabilityState();
+        const cars=await Car.find({})
+        res.json({success:true,cars})
+    }
+    catch(error){
         console.log(error.message);
         res.json({success:false,message:error.message})
     }

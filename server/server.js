@@ -22,6 +22,7 @@ app.get('/',(req,res)=>res.send("server is running"));
 app.use('/api/user',userRouter)
 app.use('/api/owner',ownerRouter)
 app.use('/api/booking',bookingRouter)
+app.use('/api/bookings', bookingRouter)
 
 
 // Handle multipart/form-data parsing errors (multer/busboy) with clear client messages.
@@ -45,4 +46,3 @@ app.use((err, req, res, next) => {
 
 const PORT=process.env.PORT || 3000;
 app.listen(PORT,()=>console.log(`Sever running on port ${PORT}`))
-

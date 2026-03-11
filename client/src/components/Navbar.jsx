@@ -1,50 +1,212 @@
-import React, { useState } from 'react'
-import { assets, menuLinks } from '../assets/assets'
-import { Link, useNavigate } from 'react-router-dom'
-import { useLocation } from 'react-router-dom'
+import React, { useState } from 'react';
+import { useAppContext } from '../context/appContext.jsx';
+import toast from 'react-hot-toast';
+import { assets, menuLinks } from '../assets/assets';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import ConfirmModal from './ConfirmModal.jsx';
 
-const Navbar = ({setShowLogin}) => {
-    const location = useLocation();
-    const [open, setOpen] = useState(false);
-    const navigate=useNavigate();
-    
-    return (
-        <div className={`flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32
-  py-4 text-gray-600 border-b border-borderColor relative transition-all
-    ${location.pathname === "/" && "bg-light"}
-    `}>
-            <Link to="/">
-                <img src={assets.logo} alt="logo" className="h-8" />
-            </Link>
+const Navbar = () => {
+  const [searchInput, setSearchInput] = useState('');
+  const [confirmState, setConfirmState] = useState({
+    open: false,
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    variant: 'primary',
+    onConfirm: null,
+  });
 
-            <div className={`max-sm:fixed max-sm:h-screen max-sm:w-full max-sm:top-16
-max-sm:border-t border-borderColor right-0 flex flex-col sm:flex-row
-items-start sm:items-center gap-4 sm:gap-8 max-sm:p-4 transition-all
-duration-300 z-50 ${location.pathname === "/" ? "bg-light" : "bg-white"} ${open ? "max-sm:translate-x-0" : "max-sm:translate-x-full"}`}>
-                {
-                    menuLinks.map((link, index) => (
-                        <Link key={index} to={link.path} >
-                            {link.name}
-                        </Link>
-                    ))
-                }
-                <div className='hidden lg:flex items-center text-sm gap-2 border border-borderColor px-3 rounded-full max-w-56'>
-                    <input type="text" className="py-1.5 w-full bg-transparent outline-none placeholder-gray-500 " placeholder="Search products" />
-                    <img src={assets.search_icon} alt="search icon" />
-                </div>
-                <div className='flex max-sm:flex-col items-start sm:items-center gap-6'>
-                    <button onClick={()=>navigate('/owner')} className='cursor-pointer'>Dashboard</button>
-                    <button onClick={()=>setShowLogin(true)} className="px-8 py-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300">
-                        Login
-                    </button>
-                </div>
+  const { setShowLogin, user, logout, isOwner, axios, setIsOwner } = useAppContext();
+
+  const location = useLocation();
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const isHomePage = location.pathname === '/';
+
+  const changeRole = async () => {
+    if (!user) {
+      setShowLogin(true);
+      return;
+    }
+    try {
+      const { data } = await axios.post('/api/owner/change-role');
+      if (data.success) {
+        setIsOwner(true);
+        toast.success(data.message);
+        navigate('/owner/add-car');
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleNavbarSearch = (event) => {
+    event.preventDefault();
+    const trimmedSearch = searchInput.trim();
+
+    navigate(trimmedSearch ? `/cars?query=${encodeURIComponent(trimmedSearch)}` : '/cars');
+    setOpen(false);
+  };
+
+  const openConfirm = ({ title, message, confirmText, variant, onConfirm }) => {
+    setConfirmState({
+      open: true,
+      title,
+      message,
+      confirmText,
+      variant,
+      onConfirm,
+    });
+  };
+
+  const closeConfirm = () => {
+    setConfirmState((prev) => ({ ...prev, open: false, onConfirm: null }));
+  };
+
+  return (
+    <>
+      <motion.header
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.45 }}
+        className={`sticky top-0 z-50 border-b backdrop-blur-xl transition-all ${
+          isHomePage
+            ? 'border-white/40 bg-white/55 shadow-[0_16px_40px_rgba(15,23,42,0.06)]'
+            : 'border-slate-200/80 bg-white/88 shadow-[0_10px_30px_rgba(15,23,42,0.05)]'
+        }`}
+      >
+        <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-6 px-6 py-4 md:px-10 lg:px-16 xl:px-24">
+          <Link to="/" className="flex items-center gap-3">
+            <motion.div whileHover={{ scale: 1.03 }} className="rounded-full bg-slate-950 p-2 shadow-[0_10px_28px_rgba(15,23,42,0.16)]">
+              <img src={assets.logo} alt="logo" className="h-7 w-7 rounded-full bg-white p-1" />
+            </motion.div>
+            <div className="hidden sm:block">
+              <p className="text-[11px] font-bold uppercase tracking-[0.34em] text-slate-500">Prestige Rentals</p>
+              <p className="text-sm font-semibold tracking-[0.08em] text-slate-900">Luxury Car Collection</p>
             </div>
-            <button onClick={()=>setOpen(!open)} className='sm:hidden cursor-pointer'>
-                <img src={open ? assets.close_icon : assets.menu_icon} alt="menu" 
-                />
-                </button>
-        </div>
-    )
-}
+          </Link>
 
-export default Navbar
+          <div
+            className={`fixed right-0 top-[73px] z-50 flex h-[calc(100vh-73px)] w-full flex-col gap-6 border-l border-slate-200/80 px-6 py-6 transition-transform duration-300 sm:static sm:h-auto sm:w-auto sm:flex-row sm:items-center sm:border-l-0 sm:bg-transparent sm:px-0 sm:py-0 ${
+              open
+                ? 'translate-x-0 bg-white/96 backdrop-blur-xl'
+                : 'translate-x-full bg-white/96 backdrop-blur-xl sm:translate-x-0'
+            }`}
+          >
+            <nav className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+              {menuLinks.map((link, index) => (
+                <NavLink
+                  key={index}
+                  to={link.path}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) =>
+                    `rounded-full px-4 py-2.5 text-sm font-semibold tracking-[0.08em] transition ${
+                      isActive
+                        ? 'bg-slate-950 text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)]'
+                        : 'text-slate-600 hover:bg-white/80 hover:text-slate-950'
+                    }`
+                  }
+                >
+                  {link.name}
+                </NavLink>
+              ))}
+            </nav>
+
+            <form
+              onSubmit={handleNavbarSearch}
+              className="flex w-full items-center gap-2 rounded-full border border-slate-200 bg-white/88 px-4 py-2 shadow-[0_8px_22px_rgba(15,23,42,0.05)] sm:w-[280px]"
+            >
+              <img src={assets.search_icon} alt="search icon" className="h-4 w-4 opacity-60" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                placeholder="Search luxury cars"
+              />
+              <button
+                type="submit"
+                className="rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-slate-800"
+              >
+                Go
+              </button>
+            </form>
+
+            <div className="flex w-full flex-col items-start gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
+              <button
+                onClick={() =>
+                  isOwner
+                    ? navigate('/owner')
+                    : openConfirm({
+                        title: 'Become an Owner?',
+                        message: 'This will switch your account to owner mode so you can list and manage cars.',
+                        confirmText: 'Continue',
+                        variant: 'primary',
+                        onConfirm: async () => {
+                          closeConfirm();
+                          await changeRole();
+                        },
+                      })
+                }
+                className="text-sm font-semibold tracking-[0.08em] text-slate-600 transition hover:text-slate-950"
+              >
+                {isOwner ? 'Dashboard' : 'List cars'}
+              </button>
+
+              <button
+                onClick={() => {
+                  if (!user) {
+                    setShowLogin(true);
+                    return;
+                  }
+
+                  openConfirm({
+                    title: 'Logout from this account?',
+                    message: 'You will need to login again to manage bookings, cars, and account actions.',
+                    confirmText: 'Logout',
+                    variant: 'danger',
+                    onConfirm: () => {
+                      closeConfirm();
+                      logout();
+                    },
+                  });
+                }}
+                className="rounded-full bg-slate-950 px-6 py-2.5 text-sm font-bold tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(15,23,42,0.14)] transition hover:bg-slate-800"
+              >
+                {user ? 'Logout' : 'Login'}
+              </button>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setOpen(!open)}
+            className="rounded-full border border-slate-200 bg-white/80 p-2.5 text-slate-700 shadow-sm transition hover:bg-white sm:hidden"
+          >
+            <img
+              src={open ? assets.close_icon : assets.menu_icon}
+              alt="menu"
+              className="h-4 w-4"
+            />
+          </button>
+        </div>
+      </motion.header>
+
+      <ConfirmModal
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText}
+        variant={confirmState.variant}
+        onClose={closeConfirm}
+        onConfirm={confirmState.onConfirm}
+      />
+    </>
+  );
+};
+
+export default Navbar;

@@ -1,134 +1,113 @@
-import React, { use, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { dummyCarData } from '../assets/assets'
-import { assets } from '../assets/assets'
-import Loader from '../components/Loder'
-
+import React from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { assets } from '../assets/assets';
+import Loader from '../components/Loder';
+import { useAppContext } from '../context/appContext';
 
 const CarDetails = () => {
   const { id } = useParams();
-  const [car, setCar] = useState(null);
+  const { cars, currency } = useAppContext();
   const navigate = useNavigate();
-  const currency = import.meta.env.VITE_CURRENCY;
-  useEffect(() => {
-    setCar(dummyCarData.find((car) => car._id === id));
-  }, [id]);
+  const car = cars.find((item) => item._id === id);
 
-const handleSubmit=async(e)=>{
-  e.preventDefault();
-}
   return car ? (
-    <div className='px-6 md:px-16 1g:px-24 x1:px-32 mt-16'>
-      <button onClick={() => navigate(-1)} className='flex items-center gap-2 mb-6
-          text-gray-500 cursor-pointer'>
-        <img src={assets.arrow_icon} alt="" className='rotate-180 opacity-65' />
+    <div className="px-4 pb-20 pt-10 md:px-8 lg:px-12 xl:px-20">
+      <button onClick={() => navigate(-1)} className="mb-6 flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900">
+        <img src={assets.arrow_icon} alt="" className="h-4 w-4 rotate-180 opacity-65" />
         Back to all cars
       </button>
 
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12'>
-        {/* Left: Car Image & Details */}
-        <div className='lg:col-span-2'>
-          <img src={car.image} alt="" className='w-full h-auto md:max-h-100
-            object-cover rounded-xl mb-6 shadow-md'/>
-          <div className='space-y-6'>
+      <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1fr_0.9fr]">
+        <div className="overflow-hidden rounded-[2.4rem] border border-white/60 bg-white/82 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl md:p-8">
+          <img src={car.image} alt="" className="mb-8 h-auto w-full rounded-[2rem] object-cover shadow-md md:max-h-[480px]" />
+          <div className="space-y-8">
             <div>
-              <h1 className='text-3xl font-bold'>{car.brand} {car.model}</h1>
-              <p className='text-gray-800 text-lg'>{car.category} â€¢ {car.year}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-500">Vehicle Overview</p>
+              <h1 className="mt-3 font-serif text-4xl text-slate-950 md:text-5xl">{car.brand} {car.model}</h1>
+              <p className="mt-2 text-lg text-slate-600">{car.category} • {car.year}</p>
             </div>
-            <hr className='border-borderColor my-6' /> 
-            <div className='grid grid-cols-2 sm:grid-cols-4 gap-4'>
+            <hr className="border-borderColor" />
+
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {[
                 { icon: assets.users_icon, text: `${car.seating_capacity} Seats` },
                 { icon: assets.fuel_icon, text: car.fuel_type },
                 { icon: assets.car_icon, text: car.transmission },
                 { icon: assets.location_icon, text: car.location },
               ].map(({ icon, text }) => (
-                <div
-                  key={text}
-                  className='flex flex-col items-center bg-gray-200 p-4 rounded-lg'
-                >
-                  <img src={icon} alt="" className='h-5 mb-2' />
-                  <span className='text-sm text-center'>{text}</span>
+                <div key={text} className="flex flex-col items-center rounded-[1.4rem] bg-slate-50 p-4 text-center">
+                  <img src={icon} alt="" className="mb-2 h-5" />
+                  <span className="text-sm text-slate-700">{text}</span>
                 </div>
               ))}
+            </div>
 
-            </div>
-            {/* Description */}
-            <div className='mt-6'>
-              <h2 className='text-xl font-medium mb-3'>Description</h2>
-              <p className='text-gray-500'>{car.description}</p>
-            </div>
-            {/* Features */}
             <div>
-              <h1 className="text-xl font-medium mb-3">Features</h1>
+              <h2 className="mb-3 text-xl font-medium text-slate-950">Description</h2>
+              <p className="max-w-3xl text-slate-600">{car.description}</p>
+            </div>
 
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <h1 className="mb-3 text-xl font-medium text-slate-950">Features</h1>
+              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {[
-                  "360 Camera",
-                  "Bluetooth",
-                  "GPS",
-                  "Heated Seats",
-                  "Rear View Mirror",
+                  '360 Camera',
+                  'Bluetooth',
+                  'GPS',
+                  'Heated Seats',
+                  'Rear View Mirror',
                 ].map((item) => (
-                  <li key={item} className="flex items-center text-gray-500">
-                    <img
-                      src={assets.check_icon}
-                      className="h-4 mr-2"
-                      alt=""
-                    />
+                  <li key={item} className="flex items-center text-slate-600">
+                    <img src={assets.check_icon} className="mr-2 h-4" alt="" />
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
             </div>
-
           </div>
         </div>
-        {/* Right: Booking Form */}
-        <form className='shadow-lg h-max sticky top-18 rounded-xl p-6 space-y-6 text-gray-500'>
 
-          <p className='flex items-center justify-between text-2xl text-gray-800 font-semibold'>
+        <div className="h-max rounded-[2.4rem] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(248,250,252,0.96))] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] md:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-500">Reservation</p>
+          <p className="mt-4 flex items-center justify-between text-4xl font-semibold text-slate-950">
             {currency}{car.pricePerDay}
-            <span className='text-base text-gray-400 font-normal'>per day</span>
+            <span className="text-base font-normal text-slate-400">per day</span>
           </p>
 
-          <hr className='border-borderColor my-6' />
+          <div className="mt-8 rounded-[1.8rem] bg-slate-950 p-5 text-white">
+            <p className="text-xs uppercase tracking-[0.28em] text-white/45">Booking includes</p>
+            <div className="mt-4 space-y-3 text-sm text-white/75">
+              <p>Flexible pickup and return dates</p>
+              <p>Driver option and contact details on booking form</p>
+              <p>Special request notes for events or airport transfer</p>
+            </div>
+          </div>
 
-          <div className='flex flex-col gap-2'>
-            <label htmlFor='pickup-date'>Pickup Date</label>
-            <input
-              type='date'
-              className='border border-borderColor px-3 py-2 rounded-lg'
-              required
-              id='pickup-date'
-              min={new Date().toISOString().split('T')[0]}
-            />
+          <div className="mt-8 space-y-4 text-sm text-slate-600">
+            <div className="flex items-center justify-between rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3">
+              <span>Location</span>
+              <span className="font-medium text-slate-950">{car.location}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3">
+              <span>Vehicle type</span>
+              <span className="font-medium text-slate-950">{car.category}</span>
+            </div>
           </div>
-          <div className='flex flex-col gap-2'>
-            <label htmlFor='pickup-date'>Pickup Date</label>
-            <input
-              type='date'
-              className='border border-borderColor px-3 py-2 rounded-lg'
-              required
-              id='pickup-date'
-              min={new Date().toISOString().split('T')[0]}
-            />
-          </div>
-          <button className='w-full bg-blue-600 hover:bg-blue-700 transition-all py-3 font-medium text-white rounded-xl cursor-pointer'>
-            Book Now
+
+          <button
+            type="button"
+            onClick={() => {
+              navigate(`/book/${car._id}`);
+              window.scrollTo(0, 0);
+            }}
+            className="mt-8 w-full rounded-2xl bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-slate-950 transition hover:brightness-105"
+          >
+            Continue To Booking
           </button>
-
-
-
-        </form>
-
-
+        </div>
       </div>
-
     </div>
-
-
   ) : <Loader />;
-}
+};
 
-export default CarDetails
+export default CarDetails;

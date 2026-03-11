@@ -1,56 +1,98 @@
-import React from 'react'
-import { assets } from '../assets/assets'
-import { useNavigate } from 'react-router-dom'
+import React from 'react';
+import { assets } from '../assets/assets';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const CarCard = ({ car }) => {
   const currency = import.meta.env.VITE_CURRENCY;
-  const navigation = useNavigate();
+  const navigate = useNavigate();
+
+  const formatDate = (date) => (date ? new Date(date).toISOString().split('T')[0] : '');
+
   return (
-    <div onClick={() => { navigation(`/car/${car._id}`); window.scrollTo(0, 0); }} className='group rounded-xl overflow-hidden shadow-lg hover:-translate-y-1 transition-all duration-500 cursor-pointer'>
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      whileHover={{ y: -8, scale: 1.02 }}
+      whileTap={{ scale: 0.97 }}
+      viewport={{ once: true }}
+      onClick={() => {
+        navigate(`/car/${car._id}`);
+        window.scrollTo(0, 0);
+      }}
+      className="group cursor-pointer overflow-hidden rounded-xl shadow-lg transition-all duration-500 hover:shadow-2xl"
+    >
+      <div className="relative h-48 overflow-hidden">
+        <motion.img
+          src={car.image}
+          alt="car"
+          className="h-full w-full object-cover"
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.5 }}
+        />
 
-      <div className='relative h-48 overflow-hidden'>
-        <img src={car.image} alt="Car Name" className='w-full h-full object-cover transition-transform duration-500 group-hover:scale-105' />
-        {car.isAvailable && <p className='absolute top-4 left-4 bg-green-500 text-white px-2.5 py-1 rounded-full'>Available Now</p>}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className={`absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-semibold ${
+            car.isAvailable
+              ? 'bg-green-500 text-white'
+              : 'bg-red-500 text-white'
+          }`}
+        >
+          {car.isAvailable ? 'Available Now' : 'Unavailable'}
+        </motion.div>
 
-        <div className='absolute bottom-4 right-4 bg-black/80 backdrop-blur-sm
-                text-white px-3 py-2 rounded-lg'>
-          <span className='font-semibold'>{currency}{car.pricePerDay}</span>
-          <span className='text-sm text-white/80'> / day</span>
+        {!car.isAvailable && car.unavailableUntil && (
+          <div className="absolute left-4 top-14 rounded-full bg-black/75 px-3 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
+            Until {formatDate(car.unavailableUntil)}
+          </div>
+        )}
+
+        <div className="absolute bottom-4 right-4 rounded-lg bg-black/80 px-3 py-2 text-white backdrop-blur-sm">
+          <span className="font-semibold">{currency}{car.pricePerDay}</span>
+          <span className="text-sm text-white/80"> / day</span>
         </div>
-
       </div>
 
-      <div className='p-4 sm:p-5'>
-        <div className='flex justify-between items-start mb-2'>
+      <div className="p-4 sm:p-5">
+        <div className="mb-2 flex justify-between items-start">
           <div>
-            <h3 className='text-lg font-medium'>{car.brand} {car.model}</h3>
-            <p className='text-muted-foreground text-sm'>{car.category} • {car.year}</p>
+            <h3 className="text-lg font-medium">
+              {car.brand} {car.model}
+            </h3>
+
+            <p className="text-sm text-gray-500">
+              {car.category} - {car.year}
+            </p>
           </div>
         </div>
 
-        <div className='mt-4 grid grid-cols-2 gap-y-2 text-gray-600'>
-          <div>
-            <img src={assets.users_icon} alt="" className='h-4 mr-2' />
+        <div className="mt-4 grid grid-cols-2 gap-y-3 text-sm text-gray-600">
+          <div className="flex items-center">
+            <img src={assets.users_icon} className="mr-2 h-4" />
             <span>{car.seating_capacity} Seats</span>
           </div>
-          <div>
-            <img src={assets.fuel_icon} alt="" className='h-4 mr-2' />
+
+          <div className="flex items-center">
+            <img src={assets.fuel_icon} className="mr-2 h-4" />
             <span>{car.fuel_type}</span>
           </div>
-          <div>
-            <img src={assets.car_icon} alt="" className='h-4 mr-2' />
+
+          <div className="flex items-center">
+            <img src={assets.car_icon} className="mr-2 h-4" />
             <span>{car.transmission}</span>
           </div>
-          <div>
-            <img src={assets.location_icon} alt="" className='h-4 mr-2' />
+
+          <div className="flex items-center">
+            <img src={assets.location_icon} className="mr-2 h-4" />
             <span>{car.location}</span>
           </div>
         </div>
-
       </div>
+    </motion.div>
+  );
+};
 
-    </div>
-  )
-}
-
-export default CarCard
+export default CarCard;
