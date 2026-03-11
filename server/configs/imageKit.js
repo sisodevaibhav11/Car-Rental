@@ -1,8 +1,69 @@
-// configs/imageKit.js
+import fs from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
 import ImageKit from "@imagekit/nodejs";
 
-const imagekit = new ImageKit({
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
-});
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.resolve(__dirname, "../uploads");
+
+const hasImageKitConfig = Boolean(
+  process.env.IMAGEKIT_PRIVATE_KEY &&
+  process.env.IMAGEKIT_PUBLIC_KEY &&
+  process.env.IMAGEKIT_URL_ENDPOINT
+);
+
+const imagekit = hasImageKitConfig
+  ? new ImageKit({
+      publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+      privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+      urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+    })
+  : null;
+
+const sanitizeFileName = (fileName = "upload") => {
+  const ext = path.extname(fileName) || ".png";
+  const baseName = path.basename(fileName, ext).replace(/[^a-zA-Z0-9-_]/g, "-");
+  return `${Date.now()}-${baseName || "image"}${ext}`;
+};
+
+export const uploadImageFile = async (file, folder = "/users") => {
+  if (!file?.buffer) {
+    throw new Error("Image file buffer is required");
+  }
+
+  if (imagekit) {
+    const response = await imagekit.files.upload({
+      file: file.buffer,
+      fileName: file.originalname,
+      folder,
+    });
+
+    return { url: response.url, storage: "imagekit" };
+  }
+
+  await fs.mkdir(uploadsDir, { recursive: true });
+  const fileName = sanitizeFileName(file.originalname);
+  const filePath = path.join(uploadsDir, fileName);
+
+  await fs.writeFile(filePath, file.buffer);
+
+  return { url: `/uploads/${fileName}`, storage: "local" };
+};
+
+export const buildImageUrl = (req, imagePath, transformation = "") => {
+  if (!imagePath) return "";
+
+  const isAbsoluteUrl = /^https?:\/\//i.test(imagePath);
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const resolvedUrl = isAbsoluteUrl ? imagePath : `${baseUrl}${imagePath}`;
+
+  if (transformation && isAbsoluteUrl && imagekit) {
+    const separator = resolvedUrl.includes("?") ? "&" : "?";
+    return `${resolvedUrl}${separator}tr=${transformation}`;
+  }
+
+  return resolvedUrl;
+};
 
 export default imagekit;

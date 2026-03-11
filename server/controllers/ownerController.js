@@ -1,4 +1,4 @@
-import imagekit from "../configs/imageKit.js";
+import { buildImageUrl, uploadImageFile } from "../configs/imageKit.js";
 import Booking from "../models/Booking.js";
 import Car from "../models/Car.js";
 import User from "../models/user.js";
@@ -56,17 +56,12 @@ export const addCar = async (req, res) => {
       return res.status(400).json({ success: false, message: "Image file is required" });
     }
 
-    // Upload file to ImageKit using @imagekit/nodejs API.
-    const uploadResponse = await imagekit.files.upload({
-      file: imageFile.buffer,
-      fileName: imageFile.originalname,
-      folder: "/users",
-    });
+    const uploadResponse = await uploadImageFile(imageFile, "/users");
 
     await Car.create({
       ...car,
       owner: _id,
-      image: uploadResponse.url,
+      image: buildImageUrl(req, uploadResponse.url),
     });
 
     res.json({ success: true, message: "Car Added" });
@@ -204,14 +199,10 @@ export const updateUserImage = async (req, res) => {
     }
 
     // Upload original image and return a transformed delivery URL to control output size.
-    const uploadResponse = await imagekit.files.upload({
-      file: imageFile.buffer,
-      fileName: imageFile.originalname,
-      folder: "/users",
-    });
+    const uploadResponse = await uploadImageFile(imageFile, "/users");
 
     const transformation = `w-${width},h-${height},q-${quality}`;
-    const resizedImageUrl = `${uploadResponse.url}?tr=${transformation}`;
+    const resizedImageUrl = buildImageUrl(req, uploadResponse.url, transformation);
 
     const updatedUser = await User.findByIdAndUpdate(
       _id,
