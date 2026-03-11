@@ -33,13 +33,17 @@ export const uploadImageFile = async (file, folder = "/users") => {
   }
 
   if (imagekit) {
-    const response = await imagekit.files.upload({
-      file: file.buffer,
-      fileName: file.originalname,
-      folder,
-    });
+    try {
+      const response = await imagekit.files.upload({
+        file: file.buffer,
+        fileName: file.originalname,
+        folder,
+      });
 
-    return { url: response.url, storage: "imagekit" };
+      return { url: response.url, storage: "imagekit" };
+    } catch (error) {
+      console.error("ImageKit upload failed, falling back to local storage:", error.message);
+    }
   }
 
   await fs.mkdir(uploadsDir, { recursive: true });
