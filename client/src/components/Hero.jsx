@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { assets, cityList } from '../assets/assets';
-import { useAppContext } from '../context/appContext';
+import { useAppContext } from '../context/AppContext';
 import { motion } from 'framer-motion';
 
 const Hero = () => {

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Title from '../components/Title';
 import { assets } from '../assets/assets';
-import { useAppContext } from '../context/appContext';
+import { useAppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
 import { motion } from "framer-motion";
 

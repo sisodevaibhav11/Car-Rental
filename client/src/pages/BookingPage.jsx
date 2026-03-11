@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { assets } from '../assets/assets';
-import { useAppContext } from '../context/appContext';
+import { useAppContext } from '../context/AppContext';
 import Loader from '../components/Loder';
 
 const BookingPage = () => {

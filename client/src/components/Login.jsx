@@ -1,6 +1,6 @@
 import React from 'react'
 import toast from 'react-hot-toast';
-import { useAppContext } from '../context/appContext';
+import { useAppContext } from '../context/AppContext';
 
 const Login = () => {
 
