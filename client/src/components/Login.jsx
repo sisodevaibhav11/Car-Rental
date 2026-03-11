@@ -11,47 +11,25 @@ const Login = () => {
   const [password, setPassword] = React.useState("");
 
   const onSubmitHandler = async (event) => {
-    event.preventDefault();
-    const trimmedName = name.trim();
-    const trimmedEmail = email.trim().toLowerCase();
-
-    if (!trimmedEmail || !password) {
-      toast.error('Email and password are required');
-      return;
-    }
-
-    if (state === 'register' && !trimmedName) {
-      toast.error('Name is required');
-      return;
-    }
-
-    if (state === 'register' && password.length < 8) {
-      toast.error('Password must be at least 8 characters');
-      return;
-    }
-
     try {
-      const payload = state === 'register'
-        ? { name: trimmedName, email: trimmedEmail, password }
-        : { email: trimmedEmail, password };
-
-      const { data } = await axios.post(`/api/user/${state}`, payload)
+      event.preventDefault();
+      const { data } = await axios.post(`/api/user/${state}`, { name, email, password })
       if (data.success) {
         navigate('/')
         setToken(data.token)
         localStorage.setItem('token', data.token)
         setShowLogin(false)
       } else {
-        toast.error(data.message)
+        toast.error(error.message)
       }
     }
     catch (error) {
-      toast.error(error?.response?.data?.message || error.message)
+      toast.error(error.message)
     }
 
   }
   return (
-    <div onClick={() => setShowLogin(false)} className='fixed inset-0 z-[100] flex items-center bg-black/50 text-sm text-gray-600'>
+    <div onClick={() => setShowLogin(false)} className='fixed top-0 bottom-0 left-0 right-0 z-100 flex item-center text-sm text-gray-600 bg-black/50'>
       <form onSubmit={onSubmitHandler} onClick={(e) => e.stopPropagation()} className="flex flex-col gap-4 m-auto items-start p-8 py-12 w-80 sm:w-[352px] text-gray-500 rounded-lg shadow-xl border border-gray-200 bg-white">
         <p className="text-2xl font-medium m-auto">
           <span className="text-indigo-500">User</span> {state === "login" ? "Login" : "Sign Up"}
@@ -68,7 +46,7 @@ const Login = () => {
         </div>
         <div className="w-full ">
           <p>Password</p>
-          <input onChange={(e) => setPassword(e.target.value)} value={password} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-indigo-500" type="password" minLength={state === "register" ? 8 : undefined} required />
+          <input onChange={(e) => setPassword(e.target.value)} value={password} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-indigo-500" type="password" required />
         </div>
         {state === "register" ? (
           <p>
