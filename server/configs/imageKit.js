@@ -6,6 +6,7 @@ import ImageKit from "@imagekit/nodejs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const uploadsDir = path.resolve(__dirname, "../uploads");
+const uploadProvider = (process.env.IMAGE_UPLOAD_PROVIDER || "auto").toLowerCase();
 
 const hasImageKitConfig = Boolean(
   process.env.IMAGEKIT_PRIVATE_KEY &&
@@ -13,7 +14,9 @@ const hasImageKitConfig = Boolean(
   process.env.IMAGEKIT_URL_ENDPOINT
 );
 
-const imagekit = hasImageKitConfig
+const shouldUseImageKit = uploadProvider !== "local" && hasImageKitConfig;
+
+const imagekit = shouldUseImageKit
   ? new ImageKit({
       publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
       privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
@@ -42,6 +45,10 @@ export const uploadImageFile = async (file, folder = "/users") => {
 
       return { url: response.url, storage: "imagekit" };
     } catch (error) {
+      if (uploadProvider === "imagekit") {
+        throw new Error(`ImageKit upload failed: ${error.message}`);
+      }
+
       console.error("ImageKit upload failed, falling back to local storage:", error.message);
     }
   }
