@@ -20,11 +20,11 @@ const Login = () => {
         localStorage.setItem('token', data.token)
         setShowLogin(false)
       } else {
-        toast.error(error.message)
+        toast.error(data.message || 'Authentication failed')
       }
     }
     catch (error) {
-      toast.error(error.message)
+      toast.error(error?.response?.data?.message || error.message)
     }
 
   }
@@ -37,16 +37,25 @@ const Login = () => {
         {state === "register" && (
           <div className="w-full">
             <p>Name</p>
-            <input onChange={(e) => setName(e.target.value)} value={name} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-indigo-500" type="text" required />
+            <input onChange={(e) => setName(e.target.value)} value={name} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-indigo-500" type="text" autoComplete="name" required />
           </div>
         )}
         <div className="w-full ">
           <p>Email</p>
-          <input onChange={(e) => setEmail(e.target.value)} value={email} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-indigo-500" type="email" required />
+          <input onChange={(e) => setEmail(e.target.value)} value={email} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-indigo-500" type="email" autoComplete="email" required />
         </div>
         <div className="w-full ">
           <p>Password</p>
-          <input onChange={(e) => setPassword(e.target.value)} value={password} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-indigo-500" type="password" required />
+          <input
+            onChange={(e) => setPassword(e.target.value)}
+            value={password}
+            placeholder="type here"
+            className="border border-gray-200 rounded w-full p-2 mt-1 outline-indigo-500"
+            type="password"
+            autoComplete={state === "register" ? "new-password" : "current-password"}
+            minLength={state === "register" ? 8 : undefined}
+            required
+          />
         </div>
         {state === "register" ? (
           <p>
