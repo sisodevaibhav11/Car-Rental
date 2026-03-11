@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
-import ImageKit from "@imagekit/nodejs";
+import ImageKit, { toFile } from "@imagekit/nodejs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +21,12 @@ const imagekit = shouldUseImageKit
       publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
       privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
       urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+      // Add timeout configuration to prevent hanging requests
+      transformation: {
+        preTransforms: [],
+      },
+      // Set reasonable timeout for uploads (30 seconds)
+      uploadTimeout: 30000,
     })
   : null;
 
@@ -38,7 +44,7 @@ export const uploadImageFile = async (file, folder = "/users") => {
   if (imagekit) {
     try {
       const response = await imagekit.files.upload({
-        file: file.buffer,
+        file: await toFile(file.buffer, file.originalname),
         fileName: file.originalname,
         folder,
       });
