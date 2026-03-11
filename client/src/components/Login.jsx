@@ -15,6 +15,7 @@ const Login = () => {
       event.preventDefault();
       const { data } = await axios.post(`/api/user/${state}`, { name, email, password })
       if (data.success) {
+        toast.success(state === "register" ? "Account created successfully" : "Logged in successfully")
         navigate('/')
         setToken(data.token)
         localStorage.setItem('token', data.token)

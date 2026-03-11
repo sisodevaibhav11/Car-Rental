@@ -21,7 +21,40 @@ const App = () => {
   const isOwnerPath = useLocation().pathname.startsWith('/owner');
   return (
     <>
-    <Toaster/>
+    <Toaster
+      position="top-right"
+      toastOptions={{
+        duration: 3000,
+        style: {
+          borderRadius: '12px',
+          padding: '14px 16px',
+          color: '#0f172a',
+          fontWeight: 500,
+        },
+        success: {
+          style: {
+            background: '#dcfce7',
+            border: '1px solid #86efac',
+            color: '#166534',
+          },
+          iconTheme: {
+            primary: '#16a34a',
+            secondary: '#dcfce7',
+          },
+        },
+        error: {
+          style: {
+            background: '#fee2e2',
+            border: '1px solid #fca5a5',
+            color: '#991b1b',
+          },
+          iconTheme: {
+            primary: '#dc2626',
+            secondary: '#fee2e2',
+          },
+        },
+      }}
+    />
       {showLogin && <Login />}
       
       {!isOwnerPath && <NavBar/>}
