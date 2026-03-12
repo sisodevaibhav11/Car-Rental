@@ -2,8 +2,10 @@ import User from "../models/user.js";
 import Car from "../models/Car.js";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
+import { OAuth2Client } from "google-auth-library";
 import { syncCarsAvailabilityState } from "../utils/carAvailability.js";
 
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (userId) => {
     if (!process.env.JWT_SECRET) {
@@ -56,6 +58,10 @@ export const loginUser = async (req, res) => {
         if (!user) {
             return res.json({ success: false, message: "User not found" })
         }
+
+        if (!user.password) {
+            return res.json({ success: false, message: "Use Google sign-in for this account" })
+        }
         
         const isMatch = await bcrypt.compare(password, user.password)
         if (!isMatch) {
@@ -67,6 +73,78 @@ export const loginUser = async (req, res) => {
     catch (error) {
         console.log(error.message);
         return res.json({ success: false, message: error.message }) 
+    }
+}
+
+export const googleLogin = async (req, res) => {
+    try {
+        if (!process.env.GOOGLE_CLIENT_ID) {
+            return res.json({ success: false, message: "GOOGLE_CLIENT_ID is not configured" })
+        }
+
+        const credential = req.body?.credential;
+        if (!credential) {
+            return res.json({ success: false, message: "Google credential is required" })
+        }
+
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        const email = payload?.email?.trim().toLowerCase();
+
+        if (!payload || !payload.sub || !email) {
+            return res.json({ success: false, message: "Invalid Google account data" })
+        }
+
+        if (!payload.email_verified) {
+            return res.json({ success: false, message: "Google email is not verified" })
+        }
+
+        let user = await User.findOne({ email });
+
+        if (user && user.googleId && user.googleId !== payload.sub) {
+            return res.json({ success: false, message: "Google account mismatch for this email" })
+        }
+
+        if (!user) {
+            user = await User.create({
+                name: payload.name || email.split("@")[0],
+                email,
+                googleId: payload.sub,
+                image: payload.picture || "",
+            });
+        } else {
+            let shouldSave = false;
+
+            if (!user.googleId) {
+                user.googleId = payload.sub;
+                shouldSave = true;
+            }
+
+            if (payload.picture && user.image !== payload.picture) {
+                user.image = payload.picture;
+                shouldSave = true;
+            }
+
+            if (payload.name && user.name !== payload.name) {
+                user.name = payload.name;
+                shouldSave = true;
+            }
+
+            if (shouldSave) {
+                await user.save();
+            }
+        }
+
+        const token = generateToken(user._id.toString());
+        res.json({ success: true, token });
+    }
+    catch (error) {
+        console.log(error.message);
+        return res.json({ success: false, message: error.message })
     }
 }
 
