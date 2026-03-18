@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Title from '../../components/owner/Title';
 import { assets } from '../../assets/assets';
 import toast from 'react-hot-toast';
@@ -20,11 +20,55 @@ const AddCar = () => {
     fuel_type: '',
     seating_capacity: 0,
     location: '',
+    coordinates: {
+      lat: null,
+      lng: null,
+    },
     description: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+
+  const mapQuery = useMemo(() => {
+    if (Number.isFinite(car.coordinates?.lat) && Number.isFinite(car.coordinates?.lng)) {
+      return `${car.coordinates.lat},${car.coordinates.lng}`;
+    }
+
+    return car.location || 'India';
+  }, [car.coordinates?.lat, car.coordinates?.lng, car.location]);
+
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Location access is not supported in this browser');
+      return;
+    }
+
+    setIsDetectingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setCar((currentCar) => ({
+          ...currentCar,
+          coordinates: {
+            lat: Number(coords.latitude.toFixed(6)),
+            lng: Number(coords.longitude.toFixed(6)),
+          },
+        }));
+        setIsDetectingLocation(false);
+        toast.success('Current map location captured');
+      },
+      (error) => {
+        setIsDetectingLocation(false);
+        toast.error(error.message || 'Unable to detect your current location');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000,
+      }
+    );
+  };
 
   const submitCar = async () => {
     if (isLoading) return null;
@@ -47,6 +91,10 @@ const AddCar = () => {
           fuel_type: '',
           seating_capacity: 0,
           location: '',
+          coordinates: {
+            lat: null,
+            lng: null,
+          },
           description: '',
         });
         setImage(null);
@@ -63,6 +111,12 @@ const AddCar = () => {
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+
+    if (!Number.isFinite(car.coordinates?.lat) || !Number.isFinite(car.coordinates?.lng)) {
+      toast.error('Use current location on the map before publishing the car');
+      return;
+    }
+
     setShowConfirm(true);
   };
 
@@ -155,13 +209,46 @@ const AddCar = () => {
             </div>
             <div className="md:col-span-2">
               <label className="text-sm font-medium text-slate-700">Location</label>
-              <select onChange={(e) => setCar({ ...car, location: e.target.value })} value={car.location} className={fieldClassName}>
-                <option value="">Select location</option>
-                <option value="New York">New York</option>
-                <option value="Los Angeles">Los Angeles</option>
-                <option value="Houston">Houston</option>
-                <option value="Chicago">Chicago</option>
-              </select>
+              <input
+                type="text"
+                required
+                placeholder="Enter city or area name"
+                className={fieldClassName}
+                value={car.location}
+                onChange={(e) => setCar({ ...car, location: e.target.value })}
+              />
+              <div className="mt-4 grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
+                <div className="rounded-[1.7rem] border border-slate-200 bg-slate-50/80 p-4">
+                  <p className="text-sm font-semibold text-slate-900">Choose on map with current location</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Use your device GPS to pin the car's exact position. This gives the homepage map proper coordinates to show where the car is located.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={useCurrentLocation}
+                    disabled={isDetectingLocation}
+                    className="mt-4 inline-flex items-center justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isDetectingLocation ? 'Detecting Location...' : 'Use Current Location'}
+                  </button>
+
+                  <div className="mt-4 rounded-[1.3rem] border border-slate-200 bg-white px-4 py-4 text-sm text-slate-600">
+                    <p className="font-medium text-slate-900">Saved coordinates</p>
+                    <p className="mt-2">Latitude: {Number.isFinite(car.coordinates?.lat) ? car.coordinates.lat : 'Not selected yet'}</p>
+                    <p className="mt-1">Longitude: {Number.isFinite(car.coordinates?.lng) ? car.coordinates.lng : 'Not selected yet'}</p>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-[1.7rem] border border-slate-200 bg-white shadow-sm">
+                  <iframe
+                    title="Car location preview map"
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=13&output=embed`}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="h-[320px] w-full border-0"
+                  />
+                </div>
+              </div>
             </div>
             <div className="md:col-span-2">
               <label className="text-sm font-medium text-slate-700">Description</label>

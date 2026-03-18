@@ -50,6 +50,24 @@ export const addCar = async (req, res) => {
       });
     }
 
+    const locationName = car?.location?.trim();
+    const lat = Number(car?.coordinates?.lat);
+    const lng = Number(car?.coordinates?.lng);
+
+    if (!locationName) {
+      return res.status(400).json({ success: false, message: "Location is required" });
+    }
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return res.status(400).json({
+        success: false,
+        message: "Pick the car location from the map so coordinates can be saved",
+      });
+    }
+
+    car.location = locationName;
+    car.coordinates = { lat, lng };
+
     const imageFile = req.file;
 
     if (!imageFile) {

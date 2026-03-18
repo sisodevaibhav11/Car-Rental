@@ -203,13 +203,25 @@ export const getCars=async(req,res)=>{
 
 export const getAvailableLocations = async (req, res) => {
     try {
-        const locations = await Car.distinct("location", { isListed: { $ne: false } });
+        const locations = await Car.aggregate([
+            { $match: { isListed: { $ne: false } } },
+            {
+                $group: {
+                    _id: "$location",
+                    coordinates: { $first: "$coordinates" },
+                },
+            },
+        ]);
+
         const normalizedLocations = locations
-            .filter(Boolean)
-            .sort((first, second) => first.localeCompare(second))
-            .map((name) => ({
-                name,
-                coordinates: locationCatalog[name] || null,
+            .filter((entry) => entry?._id)
+            .sort((first, second) => first._id.localeCompare(second._id))
+            .map((entry) => ({
+                name: entry._id,
+                coordinates:
+                    (Number.isFinite(entry?.coordinates?.lat) && Number.isFinite(entry?.coordinates?.lng))
+                        ? entry.coordinates
+                        : locationCatalog[entry._id] || null,
             }));
 
         return res.json({ success: true, locations: normalizedLocations });
