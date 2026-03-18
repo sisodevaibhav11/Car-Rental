@@ -1,14 +1,35 @@
-import React from 'react';
+﻿import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { assets } from '../assets/assets';
 import Loader from '../components/Loder';
 import { useAppContext } from '../context/AppContext';
 
 const CarDetails = () => {
   const { id } = useParams();
-  const { cars, currency } = useAppContext();
+  const { cars, currency, user, setShowLogin } = useAppContext();
   const navigate = useNavigate();
   const car = cars.find((item) => item._id === id);
+  const isBookableNow = car && car.isListed !== false && car.isAvailable;
+  const unavailableUntil = car?.unavailableUntil ? new Date(car.unavailableUntil).toISOString().split('T')[0] : '';
+
+  const handleReservationClick = () => {
+    if (!car) return;
+
+    if (!user) {
+      toast('Login or sign up to continue with this booking');
+      setShowLogin(true);
+      return;
+    }
+
+    if (!isBookableNow) {
+      toast.error(unavailableUntil ? `This car is blocked until ${unavailableUntil}` : 'This car is currently unavailable');
+      return;
+    }
+
+    navigate(`/book/${car._id}`);
+    window.scrollTo(0, 0);
+  };
 
   return car ? (
     <div className="px-4 pb-20 pt-10 md:px-8 lg:px-12 xl:px-20">
@@ -24,7 +45,7 @@ const CarDetails = () => {
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-500">Vehicle Overview</p>
               <h1 className="mt-3 font-serif text-4xl text-slate-950 md:text-5xl">{car.brand} {car.model}</h1>
-              <p className="mt-2 text-lg text-slate-600">{car.category} � {car.year}</p>
+              <p className="mt-2 text-lg text-slate-600">{car.category} • {car.year}</p>
             </div>
             <hr className="border-borderColor" />
 
@@ -84,6 +105,12 @@ const CarDetails = () => {
           </div>
 
           <div className="mt-8 space-y-4 text-sm text-slate-600">
+            <div className={`rounded-[1.4rem] border px-4 py-3 ${
+              isBookableNow ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700'
+            }`}>
+              <span className="font-semibold">{isBookableNow ? 'Available for booking now' : 'Booking temporarily blocked'}</span>
+              {!isBookableNow && unavailableUntil ? <p className="mt-1 text-xs">Unavailable until {unavailableUntil}</p> : null}
+            </div>
             <div className="flex items-center justify-between rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3">
               <span>Location</span>
               <span className="font-medium text-slate-950">{car.location}</span>
@@ -96,13 +123,11 @@ const CarDetails = () => {
 
           <button
             type="button"
-            onClick={() => {
-              navigate(`/book/${car._id}`);
-              window.scrollTo(0, 0);
-            }}
-            className="mt-8 w-full rounded-2xl bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-slate-950 transition hover:brightness-105"
+            onClick={handleReservationClick}
+            disabled={!user ? false : !isBookableNow}
+            className="mt-8 w-full rounded-2xl bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-slate-950 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Continue To Booking
+            {!user ? 'Login Or Sign Up To Rent' : isBookableNow ? 'Continue To Booking' : 'Booking Unavailable'}
           </button>
         </div>
       </div>
@@ -111,3 +136,4 @@ const CarDetails = () => {
 };
 
 export default CarDetails;
+

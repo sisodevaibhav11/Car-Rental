@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
@@ -17,6 +17,7 @@ const BookingPage = () => {
   const [needDriver, setNeedDriver] = useState('yes');
   const [specialRequests, setSpecialRequests] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingStatus, setBookingStatus] = useState({ loading: true, isBookable: false, message: '' });
 
   const rentalDays = useMemo(() => {
     if (!pickupDate || !returnDate) return 0;
@@ -27,11 +28,51 @@ const BookingPage = () => {
   }, [pickupDate, returnDate]);
 
   const estimatedTotal = rentalDays ? rentalDays * car?.pricePerDay : car?.pricePerDay || 0;
+  const unavailableUntil = car?.unavailableUntil ? new Date(car.unavailableUntil).toISOString().split('T')[0] : '';
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchBookingStatus = async () => {
+      if (!car) return;
+
+      try {
+        setBookingStatus((prev) => ({ ...prev, loading: true }));
+        const params = new URLSearchParams();
+
+        if (pickupDate) params.set('pickupDate', pickupDate);
+        if (returnDate) params.set('returnDate', returnDate);
+
+        const queryString = params.toString();
+        const { data } = await axios.get(`/api/bookings/car-status/${id}${queryString ? `?${queryString}` : ''}`);
+        if (!isMounted) return;
+
+        setBookingStatus({
+          loading: false,
+          isBookable: Boolean(data.success && data.isBookable),
+          message: data.message || '',
+        });
+      } catch (error) {
+        if (!isMounted) return;
+        setBookingStatus({
+          loading: false,
+          isBookable: false,
+          message: error?.response?.data?.message || error.message || 'Unable to verify booking availability',
+        });
+      }
+    };
+
+    fetchBookingStatus();
+    return () => {
+      isMounted = false;
+    };
+  }, [axios, car, id, pickupDate, returnDate]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!user) {
+      toast('Login or sign up to continue with this booking');
       setShowLogin(true);
       return;
     }
@@ -43,6 +84,11 @@ const BookingPage = () => {
 
     if (!contactNumber.trim()) {
       toast.error('Contact number is required');
+      return;
+    }
+
+    if (!bookingStatus.isBookable) {
+      toast.error(bookingStatus.message || 'This car is unavailable for the selected dates');
       return;
     }
 
@@ -134,6 +180,14 @@ const BookingPage = () => {
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Booking Form</p>
                 <h2 className="mt-3 font-serif text-3xl text-slate-950">Secure this vehicle</h2>
+                <p className={`mt-3 text-sm ${bookingStatus.isBookable ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {bookingStatus.loading
+                    ? 'Checking current booking availability...'
+                    : bookingStatus.message || (bookingStatus.isBookable ? 'Car is available for your selected dates' : 'Car is currently unavailable')}
+                </p>
+                {!bookingStatus.isBookable && unavailableUntil ? (
+                  <p className="mt-1 text-xs text-slate-500">Current block ends on {unavailableUntil}</p>
+                ) : null}
               </div>
               <div className="rounded-full bg-amber-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-amber-800">
                 VIP
@@ -241,10 +295,18 @@ const BookingPage = () => {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || bookingStatus.loading || (!bookingStatus.isBookable && Boolean(user))}
               className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400 px-6 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-slate-950 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isSubmitting ? 'Processing...' : 'Confirm Booking Request'}
+              {isSubmitting
+                ? 'Processing...'
+                : !user
+                  ? 'Login Or Sign Up To Book'
+                  : bookingStatus.loading
+                    ? 'Checking Availability...'
+                    : bookingStatus.isBookable
+                      ? 'Confirm Booking Request'
+                      : 'Booking Blocked'}
             </button>
           </motion.form>
         </div>

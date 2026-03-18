@@ -103,9 +103,9 @@ export const toggleCarAvailability = async (req, res) => {
       return res.json({ success: false, message: "Unauthorized" });
     }
 
-    car.isAvailable = !car.isAvailable;
+    car.isListed = !car.isListed;
     await car.save();
-    res.json({ success: true, message: "Availability Toggled" });
+    res.json({ success: true, message: car.isListed ? "Car is visible to customers again" : "Car hidden from customer bookings" });
   } catch (error) {
     console.log(error.message);
     res.json({ success: false, message: error.message });
@@ -129,6 +129,7 @@ export const deleteCar = async (req, res) => {
     }
 
     car.owner = null;
+    car.isListed = false;
     car.isAvailable = false;
     await car.save();
     res.json({ success: true, message: "Car Removed" });

@@ -11,6 +11,7 @@ const ManageCars = () => {
   const [cars, setCars] = useState([]);
   const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', confirmText: 'Confirm', variant: 'primary', action: null });
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const isListed = (car) => car.isListed !== false;
 
   const formatDate = (date) => (date ? new Date(date).toISOString().split('T')[0] : '');
 
@@ -96,12 +97,12 @@ const ManageCars = () => {
         </div>
         <div className="rounded-[1.8rem] border border-white/55 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
           <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Visible Now</p>
-          <p className="mt-3 text-4xl font-semibold text-emerald-600">{cars.filter((car) => car.isAvailable).length}</p>
+          <p className="mt-3 text-4xl font-semibold text-emerald-600">{cars.filter((car) => isListed(car)).length}</p>
           <p className="mt-1 text-sm text-slate-500">ready for new VIP requests</p>
         </div>
         <div className="rounded-[1.8rem] border border-white/55 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
           <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Protected</p>
-          <p className="mt-3 text-4xl font-semibold text-amber-600">{cars.filter((car) => !car.isAvailable).length}</p>
+          <p className="mt-3 text-4xl font-semibold text-amber-600">{cars.filter((car) => !isListed(car) || !car.isAvailable).length}</p>
           <p className="mt-1 text-sm text-slate-500">currently hidden or reserved</p>
         </div>
       </div>
@@ -125,10 +126,13 @@ const ManageCars = () => {
                   </div>
                   <p className="mt-2 text-sm text-slate-500">{car.location} - {car.year} - {car.transmission}</p>
                   <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${car.isAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                      {car.isAvailable ? 'Available Now' : 'Unavailable'}
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isListed(car) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}`}>
+                      {isListed(car) ? 'Visible To Customers' : 'Hidden From Customers'}
                     </span>
-                    {!car.isAvailable && car.unavailableUntil && <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">Until {formatDate(car.unavailableUntil)}</span>}
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${car.isAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                      {car.isAvailable ? 'Bookable Now' : 'Booking Blocked'}
+                    </span>
+                    {car.unavailableUntil && <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">Until {formatDate(car.unavailableUntil)}</span>}
                   </div>
                 </div>
               </div>
@@ -143,16 +147,16 @@ const ManageCars = () => {
                 <button
                   type="button"
                   onClick={() => openConfirm({
-                    title: car.isAvailable ? 'Hide this car from bookings?' : 'Make this car visible again?',
-                    message: car.isAvailable ? `Guests will not see ${car.brand} ${car.model} until you restore visibility.` : `${car.brand} ${car.model} will be returned to the public luxury inventory.`,
-                    confirmText: car.isAvailable ? 'Hide Car' : 'Show Car',
+                    title: isListed(car) ? 'Hide this car from bookings?' : 'Make this car visible again?',
+                    message: isListed(car) ? `Guests will not see ${car.brand} ${car.model} until you restore visibility.` : `${car.brand} ${car.model} will be returned to the public luxury inventory.`,
+                    confirmText: isListed(car) ? 'Hide Car' : 'Show Car',
                     variant: 'warning',
                     action: () => toggleAvailability(car._id),
                   })}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700 transition hover:bg-amber-100"
                 >
-                  <img src={car.isAvailable ? assets.eye_close_icon : assets.eye_icon} alt="" className="h-4 w-4" />
-                  {car.isAvailable ? 'Hide from Search' : 'Restore Visibility'}
+                  <img src={isListed(car) ? assets.eye_close_icon : assets.eye_icon} alt="" className="h-4 w-4" />
+                  {isListed(car) ? 'Hide from Search' : 'Restore Visibility'}
                 </button>
                 <button
                   type="button"

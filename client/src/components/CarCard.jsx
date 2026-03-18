@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 const CarCard = ({ car }) => {
   const currency = import.meta.env.VITE_CURRENCY;
   const navigate = useNavigate();
+  const isRentableNow = car.isListed !== false && car.isAvailable;
 
   const formatDate = (date) => (date ? new Date(date).toISOString().split('T')[0] : '');
 
@@ -36,15 +37,15 @@ const CarCard = ({ car }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className={`absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-semibold ${
-            car.isAvailable
+            isRentableNow
               ? 'bg-green-500 text-white'
               : 'bg-red-500 text-white'
           }`}
         >
-          {car.isAvailable ? 'Available Now' : 'Unavailable'}
+          {isRentableNow ? 'Available Now' : 'Unavailable'}
         </motion.div>
 
-        {!car.isAvailable && car.unavailableUntil && (
+        {!isRentableNow && car.unavailableUntil && (
           <div className="absolute left-4 top-14 rounded-full bg-black/75 px-3 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
             Until {formatDate(car.unavailableUntil)}
           </div>

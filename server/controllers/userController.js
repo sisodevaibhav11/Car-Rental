@@ -191,7 +191,7 @@ export const getUserData=async(req,res)=>{
 export const getCars=async(req,res)=>{
     try{
         await syncCarsAvailabilityState();
-        const cars=await Car.find({})
+        const cars=await Car.find({ isListed: { $ne: false } })
         res.json({success:true,cars})
     }
     catch(error){
