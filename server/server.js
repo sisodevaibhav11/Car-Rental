@@ -7,6 +7,7 @@ import connectDB from "./configs/db.js";
 import userRouter from "./routes/userRoutes.js";
 import ownerRouter from "./routes/ownerRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
+import { syncCarsAvailabilityState } from "./utils/carAvailability.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +19,7 @@ const app=express();
 
 //connectd db
 await connectDB();
+await syncCarsAvailabilityState();
 
 //middleware
 app.use(cors());
@@ -52,6 +54,12 @@ app.use((err, req, res, next) => {
 });
 
 const PORT=process.env.PORT || 3000;
+
+setInterval(() => {
+  syncCarsAvailabilityState().catch((error) => {
+    console.error("AVAILABILITY SYNC ERROR:", error.message);
+  });
+}, 60 * 1000);
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => console.log(`Sever running on port ${PORT}`));

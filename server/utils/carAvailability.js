@@ -3,17 +3,26 @@ import Car from "../models/Car.js";
 
 export const syncCarAvailabilityState = async (carId) => {
   const now = new Date();
+  const startOfTodayUtc = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    0,
+    0,
+    0,
+    0
+  ));
   const activeBooking = await Booking.findOne({
     car: carId,
     status: { $ne: "cancelled" },
-    pickupDate: { $lte: now },
-    returnDate: { $gte: new Date() },
+    pickupDate: { $lte: startOfTodayUtc },
+    returnDate: { $gte: startOfTodayUtc },
   }).sort({ returnDate: 1 });
 
   const upcomingBooking = await Booking.findOne({
     car: carId,
     status: { $ne: "cancelled" },
-    pickupDate: { $gt: now },
+    pickupDate: { $gt: startOfTodayUtc },
   }).sort({ pickupDate: 1 });
 
   const nextState = activeBooking

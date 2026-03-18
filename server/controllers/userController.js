@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
 import { OAuth2Client } from "google-auth-library";
 import { syncCarsAvailabilityState } from "../utils/carAvailability.js";
+import { locationCatalog } from "../utils/locationCatalog.js";
 
 const getGoogleClient = () => {
     if (!process.env.GOOGLE_CLIENT_ID) {
@@ -197,5 +198,23 @@ export const getCars=async(req,res)=>{
     catch(error){
         console.log(error.message);
         res.json({success:false,message:error.message})
+    }
+}
+
+export const getAvailableLocations = async (req, res) => {
+    try {
+        const locations = await Car.distinct("location", { isListed: { $ne: false } });
+        const normalizedLocations = locations
+            .filter(Boolean)
+            .sort((first, second) => first.localeCompare(second))
+            .map((name) => ({
+                name,
+                coordinates: locationCatalog[name] || null,
+            }));
+
+        return res.json({ success: true, locations: normalizedLocations });
+    } catch (error) {
+        console.log(error.message);
+        return res.status(500).json({ success: false, message: error.message });
     }
 }

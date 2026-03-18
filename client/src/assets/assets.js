@@ -43,6 +43,12 @@ import car_image3 from "./car_image3.png"
 import car_image4 from "./car_image4.png"
 
 export const cityList = ['New York', 'Los Angeles', 'Houston', 'Chicago']
+export const cityCoordinates = {
+    'New York': { lat: 40.7128, lng: -74.0060 },
+    'Los Angeles': { lat: 34.0522, lng: -118.2437 },
+    'Houston': { lat: 29.7604, lng: -95.3698 },
+    'Chicago': { lat: 41.8781, lng: -87.6298 },
+}
 
 export const assets = {
     logo,

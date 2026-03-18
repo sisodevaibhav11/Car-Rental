@@ -1,15 +1,95 @@
-import React, { useState } from 'react';
-import { assets, cityList } from '../assets/assets';
+import React, { useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { assets, cityCoordinates, cityList } from '../assets/assets';
 import { useAppContext } from '../context/AppContext';
 import { motion } from 'framer-motion';
 
 const Hero = () => {
   const [pickupLocation, setPickupLocation] = useState('');
-  const { navigate, pickupDate, setPickupDate, returnDate, setReturnDate } = useAppContext();
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const { navigate, pickupDate, setPickupDate, returnDate, setReturnDate, locations } = useAppContext();
+
+  const availableLocations = useMemo(() => {
+    if (locations.length > 0) {
+      return locations;
+    }
+
+    return cityList.map((name) => ({
+      name,
+      coordinates: cityCoordinates[name] || null,
+    }));
+  }, [locations]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     navigate('/cars?pickupLocation=' + pickupLocation + '&pickupDate=' + pickupDate + '&returnDate=' + returnDate);
+  };
+
+  const calculateDistance = (first, second) => {
+    const toRad = (value) => (value * Math.PI) / 180;
+    const earthRadiusKm = 6371;
+    const latDiff = toRad(second.lat - first.lat);
+    const lngDiff = toRad(second.lng - first.lng);
+    const a =
+      Math.sin(latDiff / 2) ** 2 +
+      Math.cos(toRad(first.lat)) * Math.cos(toRad(second.lat)) * Math.sin(lngDiff / 2) ** 2;
+
+    return 2 * earthRadiusKm * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Location access is not supported in this browser');
+      return;
+    }
+
+    if (availableLocations.length === 0) {
+      toast.error('No live rental locations are available right now');
+      return;
+    }
+
+    setIsDetectingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const matchesWithCoordinates = availableLocations.filter((location) => location.coordinates?.lat && location.coordinates?.lng);
+        if (matchesWithCoordinates.length === 0) {
+          setIsDetectingLocation(false);
+          toast.error('Live location matching is unavailable for current inventory');
+          return;
+        }
+
+        const nearestLocation = matchesWithCoordinates.reduce((nearest, location) => {
+          const distance = calculateDistance(
+            { lat: coords.latitude, lng: coords.longitude },
+            location.coordinates
+          );
+
+          if (!nearest || distance < nearest.distance) {
+            return { ...location, distance };
+          }
+
+          return nearest;
+        }, null);
+
+        if (nearestLocation?.name) {
+          setPickupLocation(nearestLocation.name);
+          toast.success(`Nearest rental location selected: ${nearestLocation.name}`);
+        } else {
+          toast.error('Unable to match your current location');
+        }
+
+        setIsDetectingLocation(false);
+      },
+      (error) => {
+        setIsDetectingLocation(false);
+        toast.error(error.message || 'Unable to detect your current location');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000,
+      }
+    );
   };
 
   return (
@@ -63,17 +143,27 @@ const Hero = () => {
             <form onSubmit={handleSearch} className="grid gap-4 xl:grid-cols-[1.2fr_1fr_1fr_auto]">
               <label className="block">
                 <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Pickup city</span>
-                <select
-                  required
-                  value={pickupLocation}
-                  onChange={(e) => setPickupLocation(e.target.value)}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                >
-                  <option value="">Select city</option>
-                  {cityList.map((city) => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                </select>
+                <div className="mt-2 space-y-2">
+                  <select
+                    required
+                    value={pickupLocation}
+                    onChange={(e) => setPickupLocation(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                  >
+                    <option value="">Select city</option>
+                    {availableLocations.map((location) => (
+                      <option key={location.name} value={location.name}>{location.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={useCurrentLocation}
+                    disabled={isDetectingLocation}
+                    className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isDetectingLocation ? 'Detecting Location...' : 'Use My Current Location'}
+                  </button>
+                </div>
               </label>
 
               <label className="block">

@@ -20,6 +20,7 @@ export const AppProvider = ({ children }) => {
     const [returnDate, setReturnDate] = useState(null);
 
     const [cars, setCars] = useState([]);
+    const [locations, setLocations] = useState([]);
 
     //function to check if user is logged in 
     const logout = useCallback((showToast = true) => {
@@ -58,16 +59,31 @@ export const AppProvider = ({ children }) => {
         }
     }, [])
 
+    const fetchLocations = useCallback(async (silent = false) => {
+        try {
+            const { data } = await axios.get('/api/user/locations')
+            if (data.success) {
+                setLocations(data.locations || [])
+            } else if (!silent) {
+                toast.error(data.message || 'Failed to load locations')
+            }
+        } catch (error) {
+            !silent && toast.error(error?.response?.data?.message || error.message)
+        }
+    }, [])
+
     //useEffect to fetch cars on first load
     useEffect(() => {
         fetchCars()
+        fetchLocations(true)
 
         const intervalId = setInterval(() => {
             fetchCars(true)
+            fetchLocations(true)
         }, 10000)
 
         return () => clearInterval(intervalId)
-    }, [fetchCars])
+    }, [fetchCars, fetchLocations])
 
     //useEffect to fetch user data when token is available
     useEffect(() => {
@@ -82,8 +98,8 @@ export const AppProvider = ({ children }) => {
     const value = useMemo(() => ({
         navigate, currency, axios, user, setUser,
         token, setToken, isOwner, setIsOwner, fetchUser, showLogin,
-        setShowLogin, pickupDate, setPickupDate, returnDate, setReturnDate, cars, fetchCars, logout, setCars
-    }), [navigate, currency, user, token, isOwner, fetchUser, showLogin, pickupDate, returnDate, cars, fetchCars, logout])
+        setShowLogin, pickupDate, setPickupDate, returnDate, setReturnDate, cars, fetchCars, logout, setCars, locations, fetchLocations
+    }), [navigate, currency, user, token, isOwner, fetchUser, showLogin, pickupDate, returnDate, cars, fetchCars, logout, locations, fetchLocations])
 
     return (
         <AppContext.Provider value={value}>
