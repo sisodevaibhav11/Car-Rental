@@ -1,11 +1,12 @@
 import React from 'react';
 import { assets } from '../assets/assets';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const CarCard = ({ car }) => {
   const currency = import.meta.env.VITE_CURRENCY;
   const navigate = useNavigate();
+  const location = useLocation();
   const isRentableNow = car.isListed !== false && car.isAvailable;
 
   const formatDate = (date) => (date ? new Date(date).toISOString().split('T')[0] : '');
@@ -19,7 +20,7 @@ const CarCard = ({ car }) => {
       whileTap={{ scale: 0.97 }}
       viewport={{ once: true }}
       onClick={() => {
-        navigate(`/car/${car._id}`);
+        navigate(`/car/${car._id}`, { state: { fromCarsPath: `${location.pathname}${location.search}` } });
         window.scrollTo(0, 0);
       }}
       className="group cursor-pointer overflow-hidden rounded-xl shadow-lg transition-all duration-500 hover:shadow-2xl"

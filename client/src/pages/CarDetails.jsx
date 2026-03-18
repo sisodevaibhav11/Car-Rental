@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { assets } from '../assets/assets';
 import Loader from '../components/Loder';
@@ -8,10 +8,12 @@ import { useAppContext } from '../context/AppContext';
 const CarDetails = () => {
   const { id } = useParams();
   const { cars, currency, user, setShowLogin } = useAppContext();
+  const location = useLocation();
   const navigate = useNavigate();
   const car = cars.find((item) => item._id === id);
   const isBookableNow = car && car.isListed !== false && car.isAvailable;
   const unavailableUntil = car?.unavailableUntil ? new Date(car.unavailableUntil).toISOString().split('T')[0] : '';
+  const backToCarsPath = location.state?.fromCarsPath || '/cars';
 
   const handleReservationClick = () => {
     if (!car) return;
@@ -33,7 +35,7 @@ const CarDetails = () => {
 
   return car ? (
     <div className="px-4 pb-20 pt-10 md:px-8 lg:px-12 xl:px-20">
-      <button onClick={() => navigate(-1)} className="mb-6 flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900">
+      <button onClick={() => navigate(backToCarsPath)} className="mb-6 flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900">
         <img src={assets.arrow_icon} alt="" className="h-4 w-4 rotate-180 opacity-65" />
         Back to all cars
       </button>
