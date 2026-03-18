@@ -85,7 +85,7 @@ export const AppProvider = ({ children }) => {
         return () => clearInterval(intervalId)
     }, [fetchCars, fetchLocations])
 
-    //useEffect to fetch user data when token is available
+    // Refresh auth-scoped and shared marketplace data whenever login state changes.
     useEffect(() => {
         if (token) {
             axios.defaults.headers.common.Authorization = token
@@ -93,7 +93,10 @@ export const AppProvider = ({ children }) => {
         } else {
             delete axios.defaults.headers.common.Authorization
         }
-    }, [fetchUser, token])
+
+        fetchCars(true)
+        fetchLocations(true)
+    }, [fetchCars, fetchLocations, fetchUser, token])
 
     const value = useMemo(() => ({
         navigate, currency, axios, user, setUser,
