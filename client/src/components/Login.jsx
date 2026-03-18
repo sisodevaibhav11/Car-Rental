@@ -9,8 +9,10 @@ const Login = () => {
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [googleAuthReady, setGoogleAuthReady] = React.useState(Boolean(window.google?.accounts?.id));
+  const [googleClientId, setGoogleClientId] = React.useState("");
   const googleButtonRef = React.useRef(null);
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const googleToastRef = React.useRef(null);
 
   const completeLogin = React.useCallback((token, message) => {
     toast.success(message)
@@ -27,36 +29,107 @@ const Login = () => {
         return;
       }
 
+      googleToastRef.current = toast.loading('Signing you in with Google...')
       const { data } = await axios.post('/api/user/google', { credential: response.credential })
       if (data.success) {
-        completeLogin(data.token, 'Logged in with Google successfully')
+        completeLogin(data.token, data.message || 'Logged in with Google successfully')
       } else {
         toast.error(data.message || 'Google authentication failed')
       }
     } catch (error) {
       toast.error(error?.response?.data?.message || error.message)
+    } finally {
+      if (googleToastRef.current) {
+        toast.dismiss(googleToastRef.current)
+        googleToastRef.current = null
+      }
     }
   }, [axios, completeLogin]);
 
   React.useEffect(() => {
-    if (!googleClientId || !googleButtonRef.current || !window.google?.accounts?.id) {
+    let isMounted = true;
+
+    const fetchGoogleConfig = async () => {
+      try {
+        const { data } = await axios.get('/api/user/auth-config');
+        if (!isMounted) return;
+
+        if (data.success && data.googleClientId) {
+          setGoogleClientId(data.googleClientId);
+        } else {
+          toast.error(data.message || 'Google sign-in is not configured on the server');
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        toast.error(error?.response?.data?.message || error.message || 'Failed to load Google sign-in configuration');
+      }
+    };
+
+    fetchGoogleConfig();
+
+    const handleGoogleScriptReady = () => {
+      if (window.google?.accounts?.id && isMounted) {
+        setGoogleAuthReady(true);
+      }
+    };
+
+    if (window.google?.accounts?.id) {
+      handleGoogleScriptReady();
+    } else {
+      window.addEventListener('load', handleGoogleScriptReady);
+      const intervalId = window.setInterval(handleGoogleScriptReady, 300);
+
+      return () => {
+        isMounted = false;
+        window.removeEventListener('load', handleGoogleScriptReady);
+        window.clearInterval(intervalId);
+      };
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [axios]);
+
+  React.useEffect(() => {
+    if (!googleClientId || !googleButtonRef.current || !googleAuthReady || !window.google?.accounts?.id) {
       return;
     }
+
+    const buttonContainer = googleButtonRef.current;
 
     window.google.accounts.id.initialize({
       client_id: googleClientId,
       callback: handleGoogleResponse,
+      auto_select: false,
+      cancel_on_tap_outside: true,
     });
 
-    googleButtonRef.current.innerHTML = '';
-    window.google.accounts.id.renderButton(googleButtonRef.current, {
+    buttonContainer.innerHTML = '';
+    window.google.accounts.id.renderButton(buttonContainer, {
       theme: 'outline',
       size: 'large',
       shape: 'pill',
       text: state === 'register' ? 'signup_with' : 'signin_with',
-      width: googleButtonRef.current.offsetWidth || 288,
+      width: buttonContainer.offsetWidth || 288,
     });
-  }, [googleClientId, handleGoogleResponse, state]);
+
+    window.google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed?.()) {
+        const reason = notification.getNotDisplayedReason?.();
+        if (reason && reason !== 'suppressed_by_user') {
+          toast.error('Google sign-in is unavailable right now. Check your Google OAuth authorized origins.');
+        }
+      }
+
+      if (notification.isSkippedMoment?.()) {
+        const reason = notification.getSkippedReason?.();
+        if (reason === 'user_cancel' || reason === 'tap_outside') {
+          toast('Google sign-in was cancelled');
+        }
+      }
+    });
+  }, [googleAuthReady, googleClientId, handleGoogleResponse, state]);
 
   const onSubmitHandler = async (event) => {
     try {
@@ -124,7 +197,7 @@ const Login = () => {
           <div ref={googleButtonRef} className="w-full min-h-11"></div>
         ) : (
           <p className="w-full text-center text-xs text-gray-400">
-            Set <code>VITE_GOOGLE_CLIENT_ID</code> to enable Google login.
+            Google sign-in is unavailable until the server Google client ID is configured.
           </p>
         )}
       </form>

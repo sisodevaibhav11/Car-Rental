@@ -5,7 +5,13 @@ import jwt from 'jsonwebtoken'
 import { OAuth2Client } from "google-auth-library";
 import { syncCarsAvailabilityState } from "../utils/carAvailability.js";
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const getGoogleClient = () => {
+    if (!process.env.GOOGLE_CLIENT_ID) {
+        throw new Error("GOOGLE_CLIENT_ID is not configured");
+    }
+
+    return new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+};
 
 const generateToken = (userId) => {
     if (!process.env.JWT_SECRET) {
@@ -87,6 +93,7 @@ export const googleLogin = async (req, res) => {
             return res.json({ success: false, message: "Google credential is required" })
         }
 
+        const googleClient = getGoogleClient();
         const ticket = await googleClient.verifyIdToken({
             idToken: credential,
             audience: process.env.GOOGLE_CLIENT_ID,
@@ -140,11 +147,29 @@ export const googleLogin = async (req, res) => {
         }
 
         const token = generateToken(user._id.toString());
-        res.json({ success: true, token });
+        res.json({
+            success: true,
+            token,
+            message: user.createdAt?.getTime() === user.updatedAt?.getTime()
+                ? "Google account connected successfully"
+                : "Logged in with Google successfully",
+        });
     }
     catch (error) {
         console.log(error.message);
         return res.json({ success: false, message: error.message })
+    }
+}
+
+export const getGoogleAuthConfig = async (req, res) => {
+    try {
+        res.json({
+            success: true,
+            googleClientId: process.env.GOOGLE_CLIENT_ID || "",
+        });
+    } catch (error) {
+        console.log(error.message);
+        return res.json({ success: false, message: error.message });
     }
 }
 
