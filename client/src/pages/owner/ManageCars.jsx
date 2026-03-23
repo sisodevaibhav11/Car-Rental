@@ -93,8 +93,8 @@ const ManageCars = () => {
     <div className="min-h-full px-2 py-2 md:px-4">
       <Title
         title="Manage Cars"
-        subTitle="Review listing visibility, availability, and pricing from one place."
-        eyebrow="Fleet"
+        subTitle="View your cars, check status, and control whether customers can see them."
+        eyebrow="Cars"
       />
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
@@ -113,17 +113,17 @@ const ManageCars = () => {
 
       <div className="mt-4 grid gap-5 md:grid-cols-3">
         <div className="rounded-[1.8rem] border border-white/55 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-          <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Inventory</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Total Cars</p>
           <p className="mt-3 text-4xl font-semibold text-slate-950">{isLoading ? '...' : cars.length}</p>
           <p className="mt-1 text-sm text-slate-500">cars added</p>
         </div>
         <div className="rounded-[1.8rem] border border-white/55 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-          <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Visible Now</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Visible Cars</p>
           <p className="mt-3 text-4xl font-semibold text-emerald-600">{isLoading ? '...' : visibleCars}</p>
           <p className="mt-1 text-sm text-slate-500">shown to customers</p>
         </div>
         <div className="rounded-[1.8rem] border border-white/55 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-          <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Needs Attention</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Hidden Or Unavailable</p>
           <p className="mt-3 text-4xl font-semibold text-amber-600">{isLoading ? '...' : protectedCars}</p>
           <p className="mt-1 text-sm text-slate-500">hidden or unavailable</p>
         </div>
@@ -149,12 +149,13 @@ const ManageCars = () => {
                     <span className="rounded-full bg-slate-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-white">{car.category}</span>
                   </div>
                   <p className="mt-2 text-sm text-slate-500">{car.location} - {car.year} - {car.transmission}</p>
+                  <p className="mt-2 text-sm text-slate-500">Main action: decide if customers should see this car.</p>
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isListed(car) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}`}>
-                      {isListed(car) ? 'Visible To Customers' : 'Hidden From Customers'}
+                      {isListed(car) ? 'Visible' : 'Hidden'}
                     </span>
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${car.isAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                      {car.isAvailable ? 'Bookable Now' : 'Booking Blocked'}
+                      {car.isAvailable ? 'Available' : 'Unavailable'}
                     </span>
                     {car.unavailableUntil && <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">Until {formatDate(car.unavailableUntil)}</span>}
                   </div>
@@ -162,7 +163,7 @@ const ManageCars = () => {
               </div>
 
               <div className="rounded-[1.5rem] bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Commercials</p>
+                <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Price</p>
                 <p className="mt-3 text-3xl font-semibold text-slate-950">{currency}{car.pricePerDay}</p>
                 <p className="text-sm text-slate-500">per day</p>
               </div>
@@ -171,8 +172,8 @@ const ManageCars = () => {
                 <button
                   type="button"
                   onClick={() => openConfirm({
-                    title: isListed(car) ? 'Hide this car from bookings?' : 'Make this car visible again?',
-                    message: isListed(car) ? `Guests will not see ${car.brand} ${car.model} until you restore visibility.` : `${car.brand} ${car.model} will be returned to the public luxury inventory.`,
+                    title: isListed(car) ? 'Hide this car?' : 'Show this car?',
+                    message: isListed(car) ? `${car.brand} ${car.model} will not be shown to customers.` : `${car.brand} ${car.model} will be shown to customers again.`,
                     confirmText: isListed(car) ? 'Hide Car' : 'Show Car',
                     variant: 'warning',
                     action: () => toggleAvailability(car._id),
@@ -185,9 +186,9 @@ const ManageCars = () => {
                 <button
                   type="button"
                   onClick={() => openConfirm({
-                    title: 'Remove this premium listing?',
-                    message: `${car.brand} ${car.model} will be removed from active inventory and no longer appear for bookings.`,
-                    confirmText: 'Remove Listing',
+                    title: 'Delete this car?',
+                    message: `${car.brand} ${car.model} will be removed from your list.`,
+                    confirmText: 'Delete Car',
                     variant: 'danger',
                     action: () => deleteCar(car._id),
                   })}

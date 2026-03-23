@@ -45,6 +45,18 @@ const AddCar = () => {
     return car.location || 'India';
   }, [car.coordinates?.lat, car.coordinates?.lng, car.location]);
   const deferredMapQuery = useDeferredValue(mapQuery);
+  const hasCoordinates = Number.isFinite(car.coordinates?.lat) && Number.isFinite(car.coordinates?.lng);
+  const isFormReady = Boolean(
+    image &&
+    car.brand.trim() &&
+    car.model.trim() &&
+    car.category &&
+    car.transmission &&
+    car.fuel_type &&
+    car.location.trim() &&
+    car.description.trim() &&
+    hasCoordinates
+  );
 
   useEffect(() => {
     if (!image) return undefined;
@@ -125,7 +137,7 @@ const AddCar = () => {
   const onSubmitHandler = async (e) => {
     e.preventDefault();
 
-    if (!Number.isFinite(car.coordinates?.lat) || !Number.isFinite(car.coordinates?.lng)) {
+    if (!hasCoordinates) {
       toast.error('Use current location on the map before publishing the car');
       return;
     }
@@ -139,19 +151,34 @@ const AddCar = () => {
     <div className="min-h-full px-2 py-2 md:px-4">
       <Title
         title="Add Car"
-        subTitle="Create a complete listing with photo, pricing, location, and description."
+        subTitle="Add the main car details: image, name, price, location, and description."
         eyebrow="New Listing"
       />
 
-      <div className="mt-6 grid gap-5 xl:grid-cols-[1.1fr_0.75fr]">
+      <div className="mt-6">
         <form
           onSubmit={onSubmitHandler}
-          className="rounded-[2rem] border border-white/55 bg-white/80 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl"
+          className="mx-auto max-w-5xl rounded-[2rem] border border-white/55 bg-white/80 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl"
         >
+          <div className="flex flex-wrap items-center gap-3 rounded-[1.6rem] border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-600">
+            <span className={`rounded-full px-3 py-1 font-medium ${image ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+              {image ? 'Photo added' : 'Add photo'}
+            </span>
+            <span className={`rounded-full px-3 py-1 font-medium ${hasCoordinates ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+              {hasCoordinates ? 'Location saved' : 'Save location'}
+            </span>
+            <span className={`rounded-full px-3 py-1 font-medium ${car.description.trim() ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+              {car.description.trim() ? 'Description ready' : 'Add description'}
+            </span>
+          </div>
+
           <div className="grid gap-6 md:grid-cols-2">
             <div className="md:col-span-2">
-              <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Vehicle Media</p>
-              <div className="mt-4 flex flex-col gap-4 rounded-[1.7rem] border border-dashed border-slate-300 bg-slate-50/80 p-5 md:flex-row md:items-center">
+              <div className="mt-6 rounded-[1.7rem] border border-slate-200 bg-slate-50/80 p-5">
+                <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Photo</p>
+                <p className="mt-2 text-lg font-semibold text-slate-900">Upload car image</p>
+                <p className="mt-1 text-sm text-slate-500">Use one clear image so the listing looks trustworthy.</p>
+                <div className="mt-4 flex flex-col gap-4 rounded-[1.5rem] border border-dashed border-slate-300 bg-white/70 p-5 md:flex-row md:items-center">
                 <label htmlFor="car-image" className="cursor-pointer">
                   <img
                     src={imagePreview}
@@ -161,19 +188,22 @@ const AddCar = () => {
                   <input type="file" id="car-image" accept="image/*" hidden onChange={(e) => setImage(e.target.files[0])} />
                 </label>
                 <div>
-                  <p className="text-lg font-semibold text-slate-900">Upload a hero image</p>
+                  <p className="text-lg font-semibold text-slate-900">{image ? 'Image selected' : 'Choose image'}</p>
                   <p className="mt-1 max-w-md text-sm leading-7 text-slate-500">
-                    Add a clean car photo so customers can quickly trust the listing.
+                    JPG, PNG, or WebP works well. A front or side view is usually best.
                   </p>
                 </div>
               </div>
             </div>
+            </div>
 
             <div>
+              <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Basic details</p>
               <label className="text-sm font-medium text-slate-700">Brand</label>
               <input type="text" required placeholder="Rolls-Royce, Bentley, Porsche..." className={fieldClassName} value={car.brand} onChange={(e) => setCar({ ...car, brand: e.target.value })} />
             </div>
             <div>
+              <p className="text-xs uppercase tracking-[0.28em] text-transparent">Basic details</p>
               <label className="text-sm font-medium text-slate-700">Model</label>
               <input type="text" required placeholder="Cullinan, Continental GT, 911..." className={fieldClassName} value={car.model} onChange={(e) => setCar({ ...car, model: e.target.value })} />
             </div>
@@ -219,7 +249,10 @@ const AddCar = () => {
               <input type="number" required placeholder="4" className={fieldClassName} value={car.seating_capacity} onChange={(e) => setCar({ ...car, seating_capacity: e.target.value })} />
             </div>
             <div className="md:col-span-2">
-              <label className="text-sm font-medium text-slate-700">Location</label>
+              <div className="rounded-[1.7rem] border border-slate-200 bg-slate-50/80 p-5">
+              <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Location</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">Set where the car is available</p>
+              <label className="mt-4 block text-sm font-medium text-slate-700">Location name</label>
               <input
                 type="text"
                 required
@@ -230,7 +263,7 @@ const AddCar = () => {
               />
               <div className="mt-4 grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
                 <div className="rounded-[1.7rem] border border-slate-200 bg-slate-50/80 p-4">
-                  <p className="text-sm font-semibold text-slate-900">Choose on map with current location</p>
+                  <p className="text-sm font-semibold text-slate-900">Use current location</p>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
                     Use your device GPS to save exact map coordinates for this car.
                   </p>
@@ -245,8 +278,8 @@ const AddCar = () => {
 
                   <div className="mt-4 rounded-[1.3rem] border border-slate-200 bg-white px-4 py-4 text-sm text-slate-600">
                     <p className="font-medium text-slate-900">Saved coordinates</p>
-                    <p className="mt-2">Latitude: {Number.isFinite(car.coordinates?.lat) ? car.coordinates.lat : 'Not selected yet'}</p>
-                    <p className="mt-1">Longitude: {Number.isFinite(car.coordinates?.lng) ? car.coordinates.lng : 'Not selected yet'}</p>
+                    <p className="mt-2">Latitude: {hasCoordinates ? car.coordinates.lat : 'Not selected yet'}</p>
+                    <p className="mt-1">Longitude: {hasCoordinates ? car.coordinates.lng : 'Not selected yet'}</p>
                   </div>
                 </div>
 
@@ -260,38 +293,28 @@ const AddCar = () => {
                   />
                 </div>
               </div>
+              </div>
             </div>
             <div className="md:col-span-2">
-              <label className="text-sm font-medium text-slate-700">Description</label>
-              <textarea rows={6} required placeholder="Describe condition, comfort, features, and who this car is best for." className={fieldClassName} value={car.description} onChange={(e) => setCar({ ...car, description: e.target.value })} />
+              <div className="rounded-[1.7rem] border border-slate-200 bg-slate-50/80 p-5">
+                <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Description</p>
+                <p className="mt-2 text-lg font-semibold text-slate-900">Tell customers about the car</p>
+                <label className="mt-4 block text-sm font-medium text-slate-700">Description</label>
+                <textarea rows={6} required placeholder="Describe condition, comfort, features, and who this car is best for." className={fieldClassName} value={car.description} onChange={(e) => setCar({ ...car, description: e.target.value })} />
+              </div>
             </div>
           </div>
 
-          <button className="mt-6 inline-flex items-center gap-2 rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70" disabled={isLoading}>
-            <img src={assets.tick_icon} alt="" />
-            {isLoading ? 'Publishing...' : 'Publish listing'}
-          </button>
+          <div className="mt-6 flex flex-col gap-3 border-t border-slate-200 pt-5 md:flex-row md:items-center md:justify-between">
+            <p className="text-sm text-slate-500">
+              {isFormReady ? 'Your listing is ready to publish.' : 'Complete the photo, location, and description before publishing.'}
+            </p>
+            <button className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70" disabled={isLoading}>
+              <img src={assets.tick_icon} alt="" />
+              {isLoading ? 'Publishing...' : 'Publish listing'}
+            </button>
+          </div>
         </form>
-
-        <div className="rounded-[2rem] border border-white/55 bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#172554] p-6 text-white shadow-[0_24px_80px_rgba(15,23,42,0.16)]">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/50">Checklist</p>
-          <h3 className="mt-2 text-2xl font-semibold">Before you publish</h3>
-          <div className="mt-6 space-y-4">
-            {[
-              'Upload a clear car photo.',
-              'Check that price, fuel type, and seating are correct.',
-              'Use current location so the map and search results stay accurate.',
-            ].map((tip) => (
-              <div key={tip} className="rounded-[1.4rem] border border-white/10 bg-white/8 p-4 text-sm leading-7 text-white/75">
-                {tip}
-              </div>
-            ))}
-          </div>
-          <div className="mt-6 rounded-[1.6rem] border border-amber-300/20 bg-amber-300/10 p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-amber-200/70">Tip</p>
-            <p className="mt-2 text-lg font-medium text-white">Short, clear listing details are easier to review and much faster to manage later.</p>
-          </div>
-        </div>
       </div>
 
       <ConfirmModal

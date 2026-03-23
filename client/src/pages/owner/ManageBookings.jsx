@@ -90,8 +90,8 @@ const ManageBookings = () => {
     <div className="min-h-full px-2 py-2 md:px-4">
       <Title
         title="Manage Bookings"
-        subTitle="Review requests, confirm trips, and keep car availability up to date."
-        eyebrow="Reservations"
+        subTitle="Check booking requests and update their status."
+        eyebrow="Bookings"
       />
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
@@ -110,7 +110,7 @@ const ManageBookings = () => {
 
       <div className="mt-4 grid gap-5 md:grid-cols-3">
         <div className="rounded-[1.8rem] border border-white/55 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-          <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Open Requests</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Pending</p>
           <p className="mt-3 text-4xl font-semibold text-slate-950">{isLoading ? '...' : pendingCount}</p>
         </div>
         <div className="rounded-[1.8rem] border border-white/55 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
@@ -118,7 +118,7 @@ const ManageBookings = () => {
           <p className="mt-3 text-4xl font-semibold text-emerald-600">{isLoading ? '...' : confirmedCount}</p>
         </div>
         <div className="rounded-[1.8rem] border border-white/55 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-          <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Projected Revenue</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Revenue</p>
           <p className="mt-3 text-4xl font-semibold text-slate-950">{isLoading ? '...' : `${currency}${projectedRevenue}`}</p>
         </div>
       </div>
@@ -138,9 +138,10 @@ const ManageBookings = () => {
               <div className="flex gap-4">
                 <img src={booking.car.image} alt="" className="h-28 w-32 rounded-[1.4rem] object-cover shadow-sm" />
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Vehicle</p>
+                  <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Car</p>
                   <h3 className="mt-2 text-xl font-semibold text-slate-900">{booking.car.brand} {booking.car.model}</h3>
                   <p className="mt-2 text-sm text-slate-500">{booking.car.location}</p>
+                  <p className="mt-2 text-sm text-slate-500">Main action: confirm or cancel this request.</p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <span className="inline-flex rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-white">
                       {formatPaymentMethod(booking.paymentMethod)}
@@ -157,9 +158,9 @@ const ManageBookings = () => {
               </div>
 
               <div className="rounded-[1.5rem] bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Trip Window</p>
+                <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Trip Dates</p>
                 <p className="mt-3 text-lg font-semibold text-slate-900">{booking.pickupDate.split('T')[0]} to {booking.returnDate.split('T')[0]}</p>
-                <p className="mt-2 text-sm text-slate-500">Booking created on {booking.createdAt.split('T')[0]}</p>
+                <p className="mt-2 text-sm text-slate-500">Requested on {booking.createdAt.split('T')[0]}</p>
                 <p className="mt-4 text-2xl font-semibold text-slate-950">{currency}{booking.price}</p>
                 {booking.paymentId && (
                   <p className="mt-2 break-all text-xs text-slate-500">Ref: {booking.paymentId}</p>
@@ -173,7 +174,7 @@ const ManageBookings = () => {
                     value={booking.status}
                     className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                   >
-                    <option value="pending">Pending</option>
+                    <option value="pending">Choose action</option>
                     <option value="cancelled">Cancelled</option>
                     <option value="confirmed">Confirmed</option>
                   </select>

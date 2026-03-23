@@ -66,9 +66,9 @@ const Sidebar = () => {
               </div>
 
               <div>
-                <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">VIP Garage</p>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Owner Panel</p>
                 <p className="mt-1 text-lg font-semibold">{user?.name}</p>
-                <p className="text-sm text-white/60">Curating premium experiences</p>
+                <p className="text-sm text-white/60">Manage your cars and bookings</p>
               </div>
             </div>
 
@@ -80,6 +80,11 @@ const Sidebar = () => {
                 Save Profile Image <img src={assets.check_icon} width={13} alt="" />
               </button>
             )}
+          </div>
+
+          <div className="mt-5 rounded-[1.4rem] border border-white/10 bg-white/6 p-4">
+            <p className="text-xs uppercase tracking-[0.28em] text-white/45">Main Features</p>
+            <p className="mt-2 text-sm text-white/70">Use these pages to add cars, control listings, and review booking requests.</p>
           </div>
 
           <div className="mt-5 space-y-2">

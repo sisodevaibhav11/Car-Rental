@@ -57,7 +57,7 @@ const Dashboard = () => {
     <div className="min-h-full px-2 py-2 md:px-4">
       <Title
         title="Dashboard"
-        subTitle="Track cars, bookings, and revenue in one clear place."
+        subTitle="See the main details of your cars and bookings in one place."
         eyebrow="Overview"
       />
 
@@ -67,8 +67,8 @@ const Dashboard = () => {
           <div className="relative">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-white/55">Revenue</p>
-                <p className="mt-2 text-sm text-white/65">Current owner performance snapshot</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-white/55">Total Revenue</p>
+                <p className="mt-2 text-sm text-white/65">Money earned from confirmed bookings</p>
               </div>
               <button
                 type="button"
@@ -83,28 +83,28 @@ const Dashboard = () => {
               <div>
                 <h2 className="text-4xl font-semibold tracking-tight md:text-5xl">{isLoading ? '...' : `${currency}${data.monthlyRevenue}`}</h2>
                 <p className="mt-2 max-w-xl text-sm leading-7 text-white/70">
-                  Revenue from confirmed bookings.
+                  This number updates when bookings are confirmed.
                 </p>
               </div>
               <div className="rounded-[1.6rem] border border-white/15 bg-white/10 px-5 py-4">
-                <p className="text-xs uppercase tracking-[0.3em] text-white/45">Summary</p>
-                <p className="mt-2 text-lg font-medium">{data.completedBookings} confirmed bookings</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-white/45">Main Focus</p>
+                <p className="mt-2 text-lg font-medium">{data.pendingBookings} bookings need review</p>
               </div>
             </div>
           </div>
         </div>
 
         <div className="rounded-[2rem] border border-white/50 bg-white/75 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Status</p>
-          <h3 className="mt-3 text-2xl font-semibold text-slate-900">Booking overview</h3>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">What To Do</p>
+          <h3 className="mt-3 text-2xl font-semibold text-slate-900">Simple next steps</h3>
           <div className="mt-5 space-y-4">
             <div className="rounded-[1.4rem] bg-slate-950 px-5 py-4 text-white">
-              <p className="text-sm text-white/60">Completion rate</p>
-              <p className="mt-1 text-3xl font-semibold">{completionRate}%</p>
+              <p className="text-sm text-white/60">Check booking requests</p>
+              <p className="mt-1 text-lg font-semibold">{data.pendingBookings} pending bookings</p>
             </div>
             <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 px-5 py-4">
-              <p className="text-sm text-slate-500">Pending bookings</p>
-              <p className="mt-1 text-3xl font-semibold text-slate-900">{data.pendingBookings}</p>
+              <p className="text-sm text-slate-500">Check car visibility</p>
+              <p className="mt-1 text-lg font-semibold text-slate-900">{data.totalCars} cars in your list</p>
             </div>
           </div>
         </div>
@@ -176,16 +176,16 @@ const Dashboard = () => {
         </div>
 
         <div className="rounded-[2rem] border border-white/55 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#172554] p-6 text-white shadow-[0_24px_80px_rgba(15,23,42,0.16)]">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/50">Notes</p>
-          <h3 className="mt-2 text-2xl font-semibold">Quick summary</h3>
+          <p className="text-xs uppercase tracking-[0.3em] text-white/50">Quick Guide</p>
+          <h3 className="mt-2 text-2xl font-semibold">Main features only</h3>
           <div className="mt-6 space-y-4">
             <div className="rounded-[1.5rem] border border-white/10 bg-white/8 p-4">
-              <p className="text-sm text-white/60">Pending</p>
-              <p className="mt-1 text-lg font-medium">Review pending bookings regularly.</p>
+              <p className="text-sm text-white/60">Add Car</p>
+              <p className="mt-1 text-lg font-medium">Create a new car listing with image, price, and location.</p>
             </div>
             <div className="rounded-[1.5rem] border border-white/10 bg-white/8 p-4">
-              <p className="text-sm text-white/60">Confirmed</p>
-              <p className="mt-1 text-lg font-medium">Confirmed bookings increase revenue.</p>
+              <p className="text-sm text-white/60">Manage</p>
+              <p className="mt-1 text-lg font-medium">Show or hide cars and confirm or cancel bookings.</p>
             </div>
           </div>
         </div>
