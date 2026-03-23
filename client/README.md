@@ -1,16 +1,15 @@
-# React + Vite
+# Client Overview
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This frontend is a React + Vite car rental demo with two main flows:
 
-Currently, two official plugins are available:
+- User flow: search cars, view details, place a booking, and track bookings.
+- Owner flow: add cars, manage listed cars, and manage incoming bookings.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The main files are:
 
-## React Compiler
+- `src/App.jsx` for routing and shared layout.
+- `src/context/AppContext.jsx` for shared app state and API helpers.
+- `src/pages/` for route-level screens.
+- `src/components/` for reusable UI pieces.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+This repo has been trimmed to keep the demo easier to explain in an interview.

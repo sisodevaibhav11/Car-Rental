@@ -1,7 +1,0 @@
-
-> server@1.0.0 start
-> node server.js
-
-Database Connected
-Sever running on port 3000
-^C

@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { assets } from '../assets/assets';
-import Loader from '../components/Loder';
+import Loader from '../components/Loader';
 import { useAppContext } from '../context/AppContext';
 
 const CarDetails = () => {

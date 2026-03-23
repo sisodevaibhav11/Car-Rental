@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { assets } from '../assets/assets';
 import { useAppContext } from '../context/AppContext';
-import Loader from '../components/Loder';
+import Loader from '../components/Loader';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 
 const BookingPage = () => {
