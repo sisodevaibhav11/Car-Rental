@@ -1,10 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import Title from '../../components/owner/Title';
 import { assets } from '../../assets/assets';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../../context/AppContext';
 import ConfirmModal from '../../components/ConfirmModal.jsx';
-import { motion } from 'framer-motion';
 
 const AddCar = () => {
   const { currency, axios } = useAppContext();
@@ -30,6 +29,13 @@ const AddCar = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const imagePreview = useMemo(() => {
+    if (!image) {
+      return assets.upload_icon;
+    }
+
+    return URL.createObjectURL(image);
+  }, [image]);
 
   const mapQuery = useMemo(() => {
     if (Number.isFinite(car.coordinates?.lat) && Number.isFinite(car.coordinates?.lng)) {
@@ -38,6 +44,13 @@ const AddCar = () => {
 
     return car.location || 'India';
   }, [car.coordinates?.lat, car.coordinates?.lng, car.location]);
+  const deferredMapQuery = useDeferredValue(mapQuery);
+
+  useEffect(() => {
+    if (!image) return undefined;
+
+    return () => URL.revokeObjectURL(imagePreview);
+  }, [image, imagePreview]);
 
   const useCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -125,15 +138,13 @@ const AddCar = () => {
   return (
     <div className="min-h-full px-2 py-2 md:px-4">
       <Title
-        title="Add a Flagship Vehicle"
-        subTitle="Design a premium listing with strong visuals, precise pricing, and polished details that match a VIP-only rental experience."
-        eyebrow="Fleet Expansion"
+        title="Add Car"
+        subTitle="Create a complete listing with photo, pricing, location, and description."
+        eyebrow="New Listing"
       />
 
       <div className="mt-6 grid gap-5 xl:grid-cols-[1.1fr_0.75fr]">
-        <motion.form
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
+        <form
           onSubmit={onSubmitHandler}
           className="rounded-[2rem] border border-white/55 bg-white/80 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl"
         >
@@ -143,7 +154,7 @@ const AddCar = () => {
               <div className="mt-4 flex flex-col gap-4 rounded-[1.7rem] border border-dashed border-slate-300 bg-slate-50/80 p-5 md:flex-row md:items-center">
                 <label htmlFor="car-image" className="cursor-pointer">
                   <img
-                    src={image ? URL.createObjectURL(image) : assets.upload_icon}
+                    src={imagePreview}
                     alt=""
                     className="h-28 w-28 rounded-[1.5rem] border border-slate-200 bg-white object-cover p-3 shadow-sm"
                   />
@@ -152,7 +163,7 @@ const AddCar = () => {
                 <div>
                   <p className="text-lg font-semibold text-slate-900">Upload a hero image</p>
                   <p className="mt-1 max-w-md text-sm leading-7 text-slate-500">
-                    Use a premium front-three-quarter shot. A strong image materially improves VIP conversion.
+                    Add a clean car photo so customers can quickly trust the listing.
                   </p>
                 </div>
               </div>
@@ -221,7 +232,7 @@ const AddCar = () => {
                 <div className="rounded-[1.7rem] border border-slate-200 bg-slate-50/80 p-4">
                   <p className="text-sm font-semibold text-slate-900">Choose on map with current location</p>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Use your device GPS to pin the car's exact position. This gives the homepage map proper coordinates to show where the car is located.
+                    Use your device GPS to save exact map coordinates for this car.
                   </p>
                   <button
                     type="button"
@@ -242,7 +253,7 @@ const AddCar = () => {
                 <div className="overflow-hidden rounded-[1.7rem] border border-slate-200 bg-white shadow-sm">
                   <iframe
                     title="Car location preview map"
-                    src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=13&output=embed`}
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(deferredMapQuery)}&z=13&output=embed`}
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                     className="h-[320px] w-full border-0"
@@ -252,29 +263,24 @@ const AddCar = () => {
             </div>
             <div className="md:col-span-2">
               <label className="text-sm font-medium text-slate-700">Description</label>
-              <textarea rows={6} required placeholder="Describe the comfort, performance, exclusivity, and ideal VIP use case." className={fieldClassName} value={car.description} onChange={(e) => setCar({ ...car, description: e.target.value })} />
+              <textarea rows={6} required placeholder="Describe condition, comfort, features, and who this car is best for." className={fieldClassName} value={car.description} onChange={(e) => setCar({ ...car, description: e.target.value })} />
             </div>
           </div>
 
-          <button className="mt-6 inline-flex items-center gap-2 rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+          <button className="mt-6 inline-flex items-center gap-2 rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70" disabled={isLoading}>
             <img src={assets.tick_icon} alt="" />
-            {isLoading ? 'Publishing...' : 'Publish Luxury Listing'}
+            {isLoading ? 'Publishing...' : 'Publish listing'}
           </button>
-        </motion.form>
+        </form>
 
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.06 }}
-          className="rounded-[2rem] border border-white/55 bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#172554] p-6 text-white shadow-[0_24px_80px_rgba(15,23,42,0.16)]"
-        >
-          <p className="text-xs uppercase tracking-[0.3em] text-white/50">Listing Blueprint</p>
-          <h3 className="mt-2 text-2xl font-semibold">Premium presentation tips</h3>
+        <div className="rounded-[2rem] border border-white/55 bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#172554] p-6 text-white shadow-[0_24px_80px_rgba(15,23,42,0.16)]">
+          <p className="text-xs uppercase tracking-[0.3em] text-white/50">Checklist</p>
+          <h3 className="mt-2 text-2xl font-semibold">Before you publish</h3>
           <div className="mt-6 space-y-4">
             {[
-              'Lead with prestige brands, trim story, and comfort details.',
-              'Set pricing to reflect exclusivity, not volume discounting.',
-              'Use city-specific positioning for chauffeur, event, and VIP transfer demand.',
+              'Upload a clear car photo.',
+              'Check that price, fuel type, and seating are correct.',
+              'Use current location so the map and search results stay accurate.',
             ].map((tip) => (
               <div key={tip} className="rounded-[1.4rem] border border-white/10 bg-white/8 p-4 text-sm leading-7 text-white/75">
                 {tip}
@@ -282,10 +288,10 @@ const AddCar = () => {
             ))}
           </div>
           <div className="mt-6 rounded-[1.6rem] border border-amber-300/20 bg-amber-300/10 p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-amber-200/70">Preview Tone</p>
-            <p className="mt-2 text-lg font-medium text-white">Only for guests who expect presence, comfort, and arrival impact.</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-amber-200/70">Tip</p>
+            <p className="mt-2 text-lg font-medium text-white">Short, clear listing details are easier to review and much faster to manage later.</p>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       <ConfirmModal

@@ -1,15 +1,18 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Title from '../../components/owner/Title';
 import { useAppContext } from '../../context/AppContext';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../../components/ConfirmModal.jsx';
-import { motion } from 'framer-motion';
 
 const ManageBookings = () => {
   const { currency, axios, fetchCars } = useAppContext();
   const [bookings, setBookings] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', confirmText: 'Confirm', variant: 'primary', bookingId: null, status: '' });
   const [isUpdating, setIsUpdating] = useState(false);
+  const pendingCount = useMemo(() => bookings.filter((booking) => booking.status === 'pending').length, [bookings]);
+  const confirmedCount = useMemo(() => bookings.filter((booking) => booking.status === 'confirmed').length, [bookings]);
+  const projectedRevenue = useMemo(() => bookings.reduce((total, booking) => total + booking.price, 0), [bookings]);
   const formatPaymentMethod = (method) => {
     if (method === 'upi') return 'UPI';
     if (method === 'card') return 'Card';
@@ -18,6 +21,10 @@ const ManageBookings = () => {
 
   const fetchOwnerBookings = useCallback(async (silent = false) => {
     try {
+      if (!silent) {
+        setIsLoading(true);
+      }
+
       const { data } = await axios.get('/api/bookings/owner');
       if (data.success) {
         setBookings(data.bookings);
@@ -26,6 +33,10 @@ const ManageBookings = () => {
       }
     } catch (error) {
       !silent && toast.error(error.message);
+    } finally {
+      if (!silent) {
+        setIsLoading(false);
+      }
     }
   }, [axios]);
 
@@ -73,40 +84,54 @@ const ManageBookings = () => {
 
   useEffect(() => {
     fetchOwnerBookings();
-    const intervalId = setInterval(() => fetchOwnerBookings(true), 10000);
-    return () => clearInterval(intervalId);
   }, [fetchOwnerBookings]);
 
   return (
     <div className="min-h-full px-2 py-2 md:px-4">
       <Title
-        title="Manage VIP Bookings"
-        subTitle="View bookings and update their status."
-        eyebrow="Reservation Desk"
+        title="Manage Bookings"
+        subTitle="Review requests, confirm trips, and keep car availability up to date."
+        eyebrow="Reservations"
       />
 
-      <div className="mt-6 grid gap-5 md:grid-cols-3">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm text-slate-600 shadow-sm">
+          {isLoading ? 'Loading bookings...' : `${bookings.length} bookings found`}
+        </div>
+        <button
+          type="button"
+          onClick={() => fetchOwnerBookings()}
+          disabled={isLoading}
+          className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isLoading ? 'Refreshing...' : 'Refresh bookings'}
+        </button>
+      </div>
+
+      <div className="mt-4 grid gap-5 md:grid-cols-3">
         <div className="rounded-[1.8rem] border border-white/55 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
           <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Open Requests</p>
-          <p className="mt-3 text-4xl font-semibold text-slate-950">{bookings.filter((booking) => booking.status === 'pending').length}</p>
+          <p className="mt-3 text-4xl font-semibold text-slate-950">{isLoading ? '...' : pendingCount}</p>
         </div>
         <div className="rounded-[1.8rem] border border-white/55 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
           <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Confirmed</p>
-          <p className="mt-3 text-4xl font-semibold text-emerald-600">{bookings.filter((booking) => booking.status === 'confirmed').length}</p>
+          <p className="mt-3 text-4xl font-semibold text-emerald-600">{isLoading ? '...' : confirmedCount}</p>
         </div>
         <div className="rounded-[1.8rem] border border-white/55 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
           <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Projected Revenue</p>
-          <p className="mt-3 text-4xl font-semibold text-slate-950">{currency}{bookings.reduce((total, booking) => total + booking.price, 0)}</p>
+          <p className="mt-3 text-4xl font-semibold text-slate-950">{isLoading ? '...' : `${currency}${projectedRevenue}`}</p>
         </div>
       </div>
 
       <div className="mt-6 grid gap-4">
+        {!isLoading && bookings.length === 0 && (
+          <div className="rounded-[1.8rem] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+            No bookings yet. Incoming requests will show up here for review.
+          </div>
+        )}
         {bookings.map((booking, index) => (
-          <motion.div
+          <div
             key={index}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.03 }}
             className="rounded-[2rem] border border-white/55 bg-white/82 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl"
           >
             <div className="grid gap-5 xl:grid-cols-[1fr_0.8fr_0.55fr]">
@@ -159,7 +184,7 @@ const ManageBookings = () => {
                 )}
               </div>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
 

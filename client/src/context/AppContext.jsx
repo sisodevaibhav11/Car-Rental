@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { toast } from 'react-hot-toast';
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:3000";
 
@@ -9,6 +9,7 @@ export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const currency = import.meta.env.VITE_CURRENCY || "$";
 
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -83,12 +84,16 @@ export const AppProvider = ({ children }) => {
     fetchLocations(true);
 
     const intervalId = setInterval(() => {
+      if (document.hidden) {
+        return;
+      }
+
       fetchCars(true);
       fetchLocations(true);
-    }, 10000);
+    }, location.pathname.startsWith('/owner') ? 30000 : 20000);
 
     return () => clearInterval(intervalId);
-  }, [fetchCars, fetchLocations]);
+  }, [fetchCars, fetchLocations, location.pathname]);
 
   useEffect(() => {
     if (token) {

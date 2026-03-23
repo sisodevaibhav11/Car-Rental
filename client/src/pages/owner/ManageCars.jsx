@@ -1,22 +1,28 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { assets } from '../../assets/assets';
 import Title from '../../components/owner/Title';
 import { useAppContext } from '../../context/AppContext';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../../components/ConfirmModal.jsx';
-import { motion } from 'framer-motion';
 
 const ManageCars = () => {
   const { currency, isOwner, axios } = useAppContext();
   const [cars, setCars] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', confirmText: 'Confirm', variant: 'primary', action: null });
   const [isActionLoading, setIsActionLoading] = useState(false);
   const isListed = (car) => car.isListed !== false;
+  const visibleCars = useMemo(() => cars.filter((car) => isListed(car)).length, [cars]);
+  const protectedCars = useMemo(() => cars.filter((car) => !isListed(car) || !car.isAvailable).length, [cars]);
 
   const formatDate = (date) => (date ? new Date(date).toISOString().split('T')[0] : '');
 
   const fetchOwnerCars = useCallback(async (silent = false) => {
     try {
+      if (!silent) {
+        setIsLoading(true);
+      }
+
       const { data } = await axios.get('/api/owner/cars');
       if (data.success) {
         setCars(data.cars);
@@ -25,6 +31,10 @@ const ManageCars = () => {
       }
     } catch (error) {
       !silent && toast.error(error.message);
+    } finally {
+      if (!silent) {
+        setIsLoading(false);
+      }
     }
   }, [axios]);
 
@@ -77,44 +87,58 @@ const ManageCars = () => {
   useEffect(() => {
     if (!isOwner) return undefined;
     fetchOwnerCars();
-    const intervalId = setInterval(() => fetchOwnerCars(true), 10000);
-    return () => clearInterval(intervalId);
   }, [fetchOwnerCars, isOwner]);
 
   return (
     <div className="min-h-full px-2 py-2 md:px-4">
       <Title
-        title="Manage Luxury Fleet"
-        subTitle="Oversee visibility, pricing position, and inventory health for every premium vehicle in your showroom."
-        eyebrow="Fleet Control"
+        title="Manage Cars"
+        subTitle="Review listing visibility, availability, and pricing from one place."
+        eyebrow="Fleet"
       />
 
-      <div className="mt-6 grid gap-5 md:grid-cols-3">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm text-slate-600 shadow-sm">
+          {isLoading ? 'Loading fleet...' : `${cars.length} cars in your owner account`}
+        </div>
+        <button
+          type="button"
+          onClick={() => fetchOwnerCars()}
+          disabled={isLoading}
+          className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isLoading ? 'Refreshing...' : 'Refresh list'}
+        </button>
+      </div>
+
+      <div className="mt-4 grid gap-5 md:grid-cols-3">
         <div className="rounded-[1.8rem] border border-white/55 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
           <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Inventory</p>
-          <p className="mt-3 text-4xl font-semibold text-slate-950">{cars.length}</p>
-          <p className="mt-1 text-sm text-slate-500">listed vehicles</p>
+          <p className="mt-3 text-4xl font-semibold text-slate-950">{isLoading ? '...' : cars.length}</p>
+          <p className="mt-1 text-sm text-slate-500">cars added</p>
         </div>
         <div className="rounded-[1.8rem] border border-white/55 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
           <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Visible Now</p>
-          <p className="mt-3 text-4xl font-semibold text-emerald-600">{cars.filter((car) => isListed(car)).length}</p>
-          <p className="mt-1 text-sm text-slate-500">ready for new VIP requests</p>
+          <p className="mt-3 text-4xl font-semibold text-emerald-600">{isLoading ? '...' : visibleCars}</p>
+          <p className="mt-1 text-sm text-slate-500">shown to customers</p>
         </div>
         <div className="rounded-[1.8rem] border border-white/55 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-          <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Protected</p>
-          <p className="mt-3 text-4xl font-semibold text-amber-600">{cars.filter((car) => !isListed(car) || !car.isAvailable).length}</p>
-          <p className="mt-1 text-sm text-slate-500">currently hidden or reserved</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Needs Attention</p>
+          <p className="mt-3 text-4xl font-semibold text-amber-600">{isLoading ? '...' : protectedCars}</p>
+          <p className="mt-1 text-sm text-slate-500">hidden or unavailable</p>
         </div>
       </div>
 
       <div className="mt-6 rounded-[2rem] border border-white/55 bg-white/82 p-3 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl md:p-4">
         <div className="grid gap-4">
+          {!isLoading && cars.length === 0 && (
+            <div className="rounded-[1.8rem] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+              No cars found yet. Add your first car to start receiving bookings.
+            </div>
+          )}
           {cars.map((car, index) => (
-            <motion.div
+            <div
               key={index}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.03 }}
               className="grid gap-5 rounded-[1.8rem] border border-slate-200 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] p-5 lg:grid-cols-[1.1fr_0.55fr_0.6fr]"
             >
               <div className="flex gap-4">
@@ -156,7 +180,7 @@ const ManageCars = () => {
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700 transition hover:bg-amber-100"
                 >
                   <img src={isListed(car) ? assets.eye_close_icon : assets.eye_icon} alt="" className="h-4 w-4" />
-                  {isListed(car) ? 'Hide from Search' : 'Restore Visibility'}
+                  {isListed(car) ? 'Hide from customers' : 'Show to customers'}
                 </button>
                 <button
                   type="button"
@@ -170,10 +194,10 @@ const ManageCars = () => {
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
                 >
                   <img src={assets.delete_icon} alt="" className="h-4 w-4" />
-                  Remove Listing
+                  Delete listing
                 </button>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

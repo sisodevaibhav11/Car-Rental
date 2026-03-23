@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { assets, ownerMenuLinks } from '../../assets/assets';
 import { useLocation, NavLink } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import toast from 'react-hot-toast';
-import { motion } from 'framer-motion';
 
 const Sidebar = () => {
   const { user, axios, fetchUser } = useAppContext();
   const location = useLocation();
   const [image, setImage] = useState('');
+  const previewImage = useMemo(() => {
+    if (image) {
+      return URL.createObjectURL(image);
+    }
+
+    return user?.image || 'https://images.unsplash.com/photo-163332755192-727a05c4013d?q=80&w=300';
+  }, [image, user?.image]);
+
+  useEffect(() => {
+    if (!image) return undefined;
+
+    return () => URL.revokeObjectURL(previewImage);
+  }, [image, previewImage]);
 
   const updateImage = async () => {
     try {
@@ -40,7 +52,7 @@ const Sidebar = () => {
               <div className="group relative">
                 <label htmlFor="image">
                   <img
-                    src={image ? URL.createObjectURL(image) : user?.image || 'https://images.unsplash.com/photo-163332755192-727a05c4013d?q=80&w=300'}
+                    src={previewImage}
                     alt=""
                     className="h-16 w-16 rounded-2xl object-cover ring-2 ring-white/15"
                   />
@@ -75,7 +87,7 @@ const Sidebar = () => {
               const active = link.path === location.pathname;
 
               return (
-                <motion.div key={index} whileHover={{ x: 4 }}>
+                <div key={index} className="transition-transform duration-150 hover:translate-x-1">
                   <NavLink
                     to={link.path}
                     className={`relative flex items-center gap-3 overflow-hidden rounded-2xl px-4 py-3.5 transition ${
@@ -88,7 +100,7 @@ const Sidebar = () => {
                     <span className="text-sm font-medium">{link.name}</span>
                     {active && <div className="ml-auto h-2.5 w-2.5 rounded-full bg-amber-400" />}
                   </NavLink>
-                </motion.div>
+                </div>
               );
             })}
           </div>
