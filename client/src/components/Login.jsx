@@ -4,6 +4,7 @@ import { useAppContext } from '../context/AppContext';
 
 const Login = () => {
   const fallbackGoogleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+  const currentOrigin = window.location.origin;
 
   const { setShowLogin, axios, setToken, navigate } = useAppContext();
   const [state, setState] = React.useState("login");
@@ -93,7 +94,7 @@ const Login = () => {
       const intervalId = window.setInterval(handleGoogleScriptReady, 300);
       const timeoutId = window.setTimeout(() => {
         if (isMounted && !window.google?.accounts?.id) {
-          toast.error('Google sign-in script did not load. Check internet connection and allowed origins.');
+          toast.error(`Google sign-in script did not load. Check internet connection and whether ${currentOrigin} is allowed in Google OAuth.`);
         }
       }, 5000);
 
@@ -137,7 +138,7 @@ const Login = () => {
       if (notification.isNotDisplayed?.()) {
         const reason = notification.getNotDisplayedReason?.();
         if (reason && reason !== 'suppressed_by_user') {
-          toast.error(`Google sign-in is unavailable right now${reason ? `: ${reason}` : ''}. Check your Google OAuth authorized origins.`);
+          toast.error(`Google sign-in is unavailable right now${reason ? `: ${reason}` : ''}. Add ${currentOrigin} to Google OAuth authorized JavaScript origins.`);
         }
       }
 
