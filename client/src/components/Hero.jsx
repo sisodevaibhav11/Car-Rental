@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { assets, cityCoordinates, cityList } from '../assets/assets';
-import { useAppContext } from '../context/appContext';
+import { useAppContext } from '../context/AppContext';
 
 const Hero = () => {
   const [pickupLocation, setPickupLocation] = useState('');

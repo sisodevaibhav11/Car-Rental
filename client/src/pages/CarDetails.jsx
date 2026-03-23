@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { assets } from '../assets/assets';
 import Loader from '../components/Loder';
-import { useAppContext } from '../context/appContext';
+import { useAppContext } from '../context/AppContext';
 
 const CarDetails = () => {
   const { id } = useParams();

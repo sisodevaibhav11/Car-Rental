@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import Title from '../components/Title';
 import { assets } from '../assets/assets';
-import { useAppContext } from '../context/appContext';
+import { useAppContext } from '../context/AppContext';
 
 const MyBookings = () => {
   const [bookings, setBookings] = useState([]);

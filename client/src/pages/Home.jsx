@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Hero from '../components/Hero.jsx';
 import CarCard from '../components/CarCard.jsx';
-import { useAppContext } from '../context/appContext.jsx';
+import { useAppContext } from '../context/AppContext.jsx';
 
 const Home = () => {
   const { cars } = useAppContext();

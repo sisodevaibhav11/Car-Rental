@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/appContext.jsx';
+import { useAppContext } from '../context/AppContext.jsx';
 import toast from 'react-hot-toast';
 import { assets, menuLinks } from '../assets/assets';
 import { Link, NavLink, useNavigate } from 'react-router-dom';

@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { assets } from '../assets/assets';
 import Title from '../components/Title';
 import CarCard from '../components/CarCard';
-import { useAppContext } from '../context/appContext';
+import { useAppContext } from '../context/AppContext';
 
 const Cars = () => {
   const [searchParams] = useSearchParams();
