@@ -1,4 +1,5 @@
 import Booking from "../models/Booking.js";
+import Car from "../models/Car.js";
 import { syncCarAvailabilityState, syncCarsAvailabilityState } from "../utils/carAvailability.js";
 import { checkAvailability, normalizeDateRange, validateBookingRequest } from "../utils/bookingCheckout.js";
 
