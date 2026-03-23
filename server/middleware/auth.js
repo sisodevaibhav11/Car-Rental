@@ -28,3 +28,15 @@ export const protect = async (req, res, next) => {
     return res.status(401).json({ success: false, message: "Invalid token" });
   }
 };
+
+export const requireOwner = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: "Not authorized" });
+  }
+
+  if (req.user.role !== "owner") {
+    return res.status(403).json({ success: false, message: "Owner access required" });
+  }
+
+  next();
+};

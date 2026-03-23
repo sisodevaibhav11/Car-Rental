@@ -41,13 +41,26 @@ export const validateBookingRequest = async ({
     specialRequests,
     paymentMethod = "cash",
   } = bookingInput;
+  const normalizedContactNumber = typeof contactNumber === "string" ? contactNumber.trim() : "";
+  const normalizedPassengerCount = passengerCount === "" || passengerCount === null || passengerCount === undefined
+    ? null
+    : Number(passengerCount);
+  const normalizedNeedDriver = typeof needDriver === "boolean"
+    ? needDriver
+    : String(needDriver).toLowerCase() === "yes" || String(needDriver).toLowerCase() === "true";
 
-  if (!car || !pickupDate || !returnDate || !contactNumber) {
+  if (!car || !pickupDate || !returnDate || !normalizedContactNumber) {
     return { ok: false, status: 400, message: "Car, pickup date, return date, and contact number are required" };
   }
 
   if (!["cash", "card", "upi"].includes(paymentMethod)) {
     return { ok: false, status: 400, message: "Unsupported payment method" };
+  }
+
+  if (normalizedPassengerCount !== null) {
+    if (!Number.isInteger(normalizedPassengerCount) || normalizedPassengerCount < 1) {
+      return { ok: false, status: 400, message: "Passenger count must be a valid positive number" };
+    }
   }
 
   const dateRange = normalizeDateRange(pickupDate, returnDate);
@@ -86,6 +99,14 @@ export const validateBookingRequest = async ({
   const normalizedPaymentMethod = paymentMethod === "cash" ? "cash" : paymentMethod;
   const paymentStatus = normalizedPaymentMethod === "cash" && allowPendingCash ? "pending" : "paid";
 
+  if (normalizedPassengerCount !== null && normalizedPassengerCount > carData.seating_capacity) {
+    return {
+      ok: false,
+      status: 400,
+      message: `Passenger count cannot exceed ${carData.seating_capacity} for this car`,
+    };
+  }
+
   return {
     ok: true,
     carData,
@@ -97,9 +118,9 @@ export const validateBookingRequest = async ({
       pickupDate,
       returnDate,
       pickupTime: pickupTime || "",
-      contactNumber: contactNumber.trim(),
-      passengerCount: passengerCount || null,
-      needDriver: Boolean(needDriver),
+      contactNumber: normalizedContactNumber,
+      passengerCount: normalizedPassengerCount,
+      needDriver: normalizedNeedDriver,
       specialRequests: specialRequests?.trim() || "",
       price,
       paymentMethod: normalizedPaymentMethod,

@@ -58,6 +58,13 @@ export const confirmPaymentAndCreateBooking = async (req, res) => {
       });
     }
 
+    if (!String(orderId).startsWith("ord_") || !String(paymentToken).startsWith("paytok_")) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment confirmation payload",
+      });
+    }
+
     const bookingValidation = await validateBookingRequest({
       userId: _id,
       bookingInput: req.body,

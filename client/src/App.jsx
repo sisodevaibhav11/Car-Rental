@@ -14,7 +14,7 @@ import ManageCars from './pages/owner/ManageCars.jsx'
 import ManageBookings from './pages/owner/ManageBookings.jsx'
 import Login from './components/Login.jsx'
 import {Toaster} from 'react-hot-toast'
-import { useAppContext } from './context/AppContext.jsx'
+import { useAppContext } from './context/appContext.jsx'
     
 const App = () => {
   const {showLogin}=useAppContext();

@@ -147,10 +147,6 @@ export const getUserBookings = async (req, res) => {
 // API to get owner bookings.
 export const getOwnerBookings = async (req, res) => {
   try {
-    if (req.user.role !== "owner") {
-      return res.json({ success: false, message: "Unauthorized" });
-    }
-
     const bookings = await Booking.find({ owner: req.user._id })
       .populate("car user")
       .select("-user.password")
@@ -168,14 +164,23 @@ export const changeBookingStatus = async (req, res) => {
   try {
     const { _id } = req.user;
     const { bookingId, status } = req.body;
+    const allowedStatuses = ["pending", "confirmed", "cancelled"];
+
+    if (!bookingId || !status) {
+      return res.status(400).json({ success: false, message: "bookingId and status are required" });
+    }
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid booking status" });
+    }
 
     const booking = await Booking.findById(bookingId);
     if (!booking) {
-      return res.json({ success: false, message: "Booking not found" });
+      return res.status(404).json({ success: false, message: "Booking not found" });
     }
 
     if (booking.owner.toString() !== _id.toString()) {
-      return res.json({ success: false, message: "Unauthorized" });
+      return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
     booking.status = status;

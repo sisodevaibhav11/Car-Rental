@@ -1,7 +1,7 @@
 import React from 'react';
 import { assets } from '../../assets/assets';
 import { Link } from 'react-router-dom';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/appContext';
 import { motion } from 'framer-motion';
 
 const NavbarOwner = () => {

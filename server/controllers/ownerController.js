@@ -9,7 +9,10 @@ export const changeRoleToOwner = async (req, res) => {
   try {
     const { _id } = req.user;
 
-    // Find and Update with { new: true } to get the updated document back if needed
+    if (req.user.role === "owner") {
+      return res.json({ success: true, message: "You already have owner access" });
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       _id,
       { role: "owner" },
@@ -160,11 +163,7 @@ export const deleteCar = async (req, res) => {
 //api to get Dashboard data
 export const getDashboardData = async (req, res) => {
   try {
-    const { _id, role } = req.user;
-
-    if (role !== "owner") {
-      return res.json({ success: false, message: "Unauthorized" });
-    }
+    const { _id } = req.user;
 
     const cars = await Car.find({ owner: _id });
     const carIds = cars.map((car) => car._id);

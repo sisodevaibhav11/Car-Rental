@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { assets, ownerMenuLinks } from '../../assets/assets';
 import { useLocation, NavLink } from 'react-router-dom';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/appContext';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 

@@ -28,10 +28,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.get('/',(req,res)=>res.send("server is running"));
+app.get('/',(req,res)=>res.json({
+  success: true,
+  message: "Car rental server is running",
+  routes: {
+    user: "/api/user",
+    owner: "/api/owner",
+    bookings: "/api/bookings",
+    payment: "/api/payment",
+  },
+}));
 app.use('/api/user',userRouter)
 app.use('/api/owner',ownerRouter)
-app.use('/api/booking',bookingRouter)
 app.use('/api/bookings', bookingRouter)
 app.use('/api/payment', paymentRouter)
 

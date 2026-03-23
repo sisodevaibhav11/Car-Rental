@@ -1,28 +1,27 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import Title from '../components/Title';
 import { assets } from '../assets/assets';
-import { useAppContext } from '../context/AppContext';
-import toast from 'react-hot-toast';
-import { motion } from "framer-motion";
+import { useAppContext } from '../context/appContext';
 
 const MyBookings = () => {
-
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const { currency, axios, user } = useAppContext();
 
   const fetchMyBookings = useCallback(async (silent = false) => {
     try {
-      const { data } = await axios.get('/api/bookings/user')
+      const { data } = await axios.get('/api/bookings/user');
 
       if (data.success) {
-        setBookings(data.bookings)
-      } else {
-        !silent && toast.error(data.message)
+        setBookings(data.bookings);
+      } else if (!silent) {
+        toast.error(data.message);
       }
-
     } catch (error) {
-      !silent && toast.error(error.message)
+      if (!silent) {
+        toast.error(error.message);
+      }
     }
   }, [axios]);
 
@@ -47,22 +46,6 @@ const MyBookings = () => {
     }
   }, [bookings, selectedBooking]);
 
-
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2
-      }
-    }
-  }
-
-  const card = {
-    hidden: { opacity: 0, y: 40 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
-  }
-
   const formatDate = (date) => date ? new Date(date).toISOString().split('T')[0] : '';
   const formatPaymentMethod = (method) => {
     if (method === 'upi') return 'UPI';
@@ -70,135 +53,114 @@ const MyBookings = () => {
     return 'Cash';
   };
 
+  if (!user) {
+    return (
+      <div className="mx-auto mt-16 max-w-4xl px-6 md:px-10">
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <h1 className="text-3xl font-semibold text-slate-950">My Bookings</h1>
+          <p className="mt-3 text-slate-600">Login first to see your booking history and booking status.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className='px-6 md:px-16 lg:px-24 xl:px-32 2xl:px-48 mt-16 text-sm max-w-7xl mx-auto'
-    >
-
+    <div className="mx-auto mt-16 max-w-6xl px-6 text-sm md:px-10">
       <Title
         title="My Bookings"
-        subTitle="View and manage your bookings"
+        subTitle="View your booking status, trip dates, payment method, and total amount."
         align="left"
       />
 
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className='flex flex-col gap-5 mt-12'
-      >
+      {bookings.length === 0 ? (
+        <div className="mt-10 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
+          <p className="text-lg font-semibold text-slate-950">No bookings yet</p>
+          <p className="mt-2 text-slate-600">Create one booking and it will appear here for your demo.</p>
+        </div>
+      ) : (
+        <div className="mt-10 flex flex-col gap-5">
+          {bookings.map((booking, index) => (
+            <div
+              key={booking._id}
+              onClick={() => setSelectedBooking(booking)}
+              className="grid cursor-pointer grid-cols-1 gap-6 rounded-[1.8rem] border border-slate-200 bg-white p-6 shadow-sm transition hover:border-slate-300 hover:shadow-md md:grid-cols-4"
+            >
+              <div className="md:col-span-1">
+                <div className="mb-3 overflow-hidden rounded-xl">
+                  <img
+                    src={booking.car.image}
+                    alt=""
+                    className="aspect-video h-auto w-full object-cover"
+                  />
+                </div>
 
-        {bookings.map((booking, index) => (
-
-          <motion.div
-            key={booking._id}
-            variants={card}
-            whileHover={{ scale: 1.02 }}
-            onClick={() => setSelectedBooking(booking)}
-            className="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 border border-borderColor rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer"
-          >
-
-            {/* Car Info */}
-            <div className='md:col-span-1'>
-              <div className='rounded-md overflow-hidden mb-3'>
-                <motion.img
-                  src={booking.car.image}
-                  alt=""
-                  className='w-full h-auto aspect-video object-cover'
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.3 }}
-                />
-              </div>
-
-              <p className='text-lg font-medium mt-2'>
-                {booking.car.brand} {booking.car.model}
-              </p>
-
-              <p className='text-gray-500'>
-                {booking.car.year} - {booking.car.category} - {booking.car.location}
-              </p>
-            </div>
-
-            {/* Booking Details */}
-            <div className='md:col-span-2 flex flex-col gap-4'>
-
-              <div className='flex items-center gap-2'>
-                <p className='px-3 py-1.5 bg-light rounded'>
-                  Booking #{index + 1}
+                <p className="mt-2 text-lg font-medium">
+                  {booking.car.brand} {booking.car.model}
                 </p>
 
-                <p className={`px-3 py-1 text-xs rounded-full ${booking.status === 'confirmed'
-                    ? 'bg-green-400/15 text-green-600'
-                    : 'bg-red-400/15 text-red-600'
+                <p className="text-gray-500">
+                  {booking.car.year} | {booking.car.category} | {booking.car.location}
+                </p>
+              </div>
+
+              <div className="md:col-span-2 flex flex-col gap-4">
+                <div className="flex items-center gap-2">
+                  <p className="rounded bg-light px-3 py-1.5">
+                    Booking #{index + 1}
+                  </p>
+
+                  <p className={`rounded-full px-3 py-1 text-xs ${
+                    booking.status === 'confirmed'
+                      ? 'bg-green-400/15 text-green-600'
+                      : booking.status === 'cancelled'
+                        ? 'bg-red-400/15 text-red-600'
+                        : 'bg-amber-400/15 text-amber-700'
                   }`}>
-                  {booking.status}
-                </p>
-              </div>
-
-              <div className='flex items-start gap-2 mt-2'>
-                <img src={assets.calendar_icon_colored} className='w-4 h-4 mt-1' />
-
-                <div>
-                  <p className='text-gray-500 leading-none'>Rental Period</p>
-                  <p className='mt-1'>
-                    {formatDate(booking.pickupDate)} To {formatDate(booking.returnDate)}
+                    {booking.status}
                   </p>
                 </div>
-              </div>
 
-              <div className='flex items-start gap-2'>
-                <img src={assets.location_icon} className='w-4 h-4 mt-1' />
+                <div className="mt-2 flex items-start gap-2">
+                  <img src={assets.calendar_icon_colored} className="mt-1 h-4 w-4" alt="" />
 
-                <div>
-                  <p className='text-gray-500 leading-none'>Pick-up Location</p>
-                  <p className='mt-1'>{booking.car.location}</p>
+                  <div>
+                    <p className="leading-none text-gray-500">Rental Period</p>
+                    <p className="mt-1">
+                      {formatDate(booking.pickupDate)} to {formatDate(booking.returnDate)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <img src={assets.location_icon} className="mt-1 h-4 w-4" alt="" />
+
+                  <div>
+                    <p className="leading-none text-gray-500">Pick-up Location</p>
+                    <p className="mt-1">{booking.car.location}</p>
+                  </div>
                 </div>
               </div>
 
-            </div>
-
-            {/* Payment Info */}
-            <div className='md:col-span-1 flex flex-col justify-between items-end text-right'>
-
-              <div className='text-sm text-gray-500'>
-                <p>Total Price</p>
-
-                <motion.h1
-                  whileHover={{ scale: 1.1 }}
-                  className='text-2xl font-semibold text-primary'
-                >
-                  {currency}{booking.price}
-                </motion.h1>
-
-                <p className='mt-2'>
-                  Booked on {formatDate(booking.createdAt)}
-                </p>
-                <p className='mt-2 capitalize'>
-                  {formatPaymentMethod(booking.paymentMethod)} - {booking.paymentStatus}
-                </p>
+              <div className="md:col-span-1 flex flex-col justify-between items-end text-right">
+                <div className="text-sm text-gray-500">
+                  <p>Total Price</p>
+                  <h1 className="text-2xl font-semibold text-primary">{currency}{booking.price}</h1>
+                  <p className="mt-2">Booked on {formatDate(booking.createdAt)}</p>
+                  <p className="mt-2 capitalize">{formatPaymentMethod(booking.paymentMethod)} - {booking.paymentStatus}</p>
+                </div>
               </div>
-
             </div>
-
-          </motion.div>
-
-        ))}
-
-      </motion.div>
+          ))}
+        </div>
+      )}
 
       {selectedBooking && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
           onClick={() => setSelectedBooking(null)}
         >
-          <motion.div
-            initial={{ opacity: 0, y: 16, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.2 }}
-            onClick={(e) => e.stopPropagation()}
+          <div
+            onClick={(event) => event.stopPropagation()}
             className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl"
           >
             <div className="flex items-start justify-between gap-4">
@@ -207,7 +169,7 @@ const MyBookings = () => {
                   {selectedBooking.car?.brand} {selectedBooking.car?.model}
                 </h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  {selectedBooking.car?.year} - {selectedBooking.car?.category} - {selectedBooking.car?.location}
+                  {selectedBooking.car?.year} | {selectedBooking.car?.category} | {selectedBooking.car?.location}
                 </p>
               </div>
 
@@ -288,15 +250,14 @@ const MyBookings = () => {
               {selectedBooking.paymentId && (
                 <div className="rounded-xl bg-gray-50 p-4 sm:col-span-2">
                   <p className="text-gray-500">Payment Reference</p>
-                  <p className="mt-1 font-medium break-all">{selectedBooking.paymentId}</p>
+                  <p className="mt-1 break-all font-medium">{selectedBooking.paymentId}</p>
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
-
-    </motion.div>
+    </div>
   );
 };
 
