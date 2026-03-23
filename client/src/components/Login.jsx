@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
 
 const Login = () => {
+  const fallbackGoogleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
   const { setShowLogin, axios, setToken, navigate } = useAppContext();
   const [state, setState] = React.useState("login");
@@ -56,11 +57,23 @@ const Login = () => {
 
         if (data.success && data.googleClientId) {
           setGoogleClientId(data.googleClientId);
-        } else {
-          toast.error(data.message || 'Google sign-in is not configured on the server');
+          return;
         }
+
+        if (fallbackGoogleClientId) {
+          setGoogleClientId(fallbackGoogleClientId);
+          return;
+        }
+
+        toast.error(data.message || 'Google sign-in is not configured on the server');
       } catch (error) {
         if (!isMounted) return;
+
+        if (fallbackGoogleClientId) {
+          setGoogleClientId(fallbackGoogleClientId);
+          return;
+        }
+
         toast.error(error?.response?.data?.message || error.message || 'Failed to load Google sign-in configuration');
       }
     };
@@ -78,18 +91,24 @@ const Login = () => {
     } else {
       window.addEventListener('load', handleGoogleScriptReady);
       const intervalId = window.setInterval(handleGoogleScriptReady, 300);
+      const timeoutId = window.setTimeout(() => {
+        if (isMounted && !window.google?.accounts?.id) {
+          toast.error('Google sign-in script did not load. Check internet connection and allowed origins.');
+        }
+      }, 5000);
 
       return () => {
         isMounted = false;
         window.removeEventListener('load', handleGoogleScriptReady);
         window.clearInterval(intervalId);
+        window.clearTimeout(timeoutId);
       };
     }
 
     return () => {
       isMounted = false;
     };
-  }, [axios]);
+  }, [axios, fallbackGoogleClientId]);
 
   React.useEffect(() => {
     if (!googleClientId || !googleButtonRef.current || !googleAuthReady || !window.google?.accounts?.id) {
@@ -118,7 +137,7 @@ const Login = () => {
       if (notification.isNotDisplayed?.()) {
         const reason = notification.getNotDisplayedReason?.();
         if (reason && reason !== 'suppressed_by_user') {
-          toast.error('Google sign-in is unavailable right now. Check your Google OAuth authorized origins.');
+          toast.error(`Google sign-in is unavailable right now${reason ? `: ${reason}` : ''}. Check your Google OAuth authorized origins.`);
         }
       }
 
@@ -197,7 +216,7 @@ const Login = () => {
           <div ref={googleButtonRef} className="w-full min-h-11"></div>
         ) : (
           <p className="w-full text-center text-xs text-gray-400">
-            Google sign-in is unavailable until the server Google client ID is configured.
+            Google sign-in is unavailable until the Google client ID is configured.
           </p>
         )}
       </form>
