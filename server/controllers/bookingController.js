@@ -1,29 +1,6 @@
-import Car from "../models/Car.js";
 import Booking from "../models/Booking.js";
 import { syncCarAvailabilityState, syncCarsAvailabilityState } from "../utils/carAvailability.js";
-
-// Returns true when the car has no overlapping bookings in the requested range.
-const checkAvailability = async (car, pickupDate, returnDate) => {
-  const bookings = await Booking.find({
-    car,
-    pickupDate: { $lte: returnDate },
-    returnDate: { $gte: pickupDate },
-    status: { $ne: "cancelled" },
-  });
-
-  return bookings.length === 0;
-};
-
-const normalizeDateRange = (pickupDate, returnDate) => {
-  const picked = new Date(pickupDate);
-  const returned = new Date(returnDate);
-
-  if (Number.isNaN(picked.getTime()) || Number.isNaN(returned.getTime()) || returned <= picked) {
-    return null;
-  }
-
-  return { picked, returned };
-};
+import { checkAvailability, normalizeDateRange, validateBookingRequest } from "../utils/bookingCheckout.js";
 
 // API to check availability of cars for the given date range and location.
 export const checkAvailabilityOfCar = async (req, res) => {
@@ -119,76 +96,32 @@ export const getCarBookingStatus = async (req, res) => {
 export const createBooking = async (req, res) => {
   try {
     const { _id } = req.user;
-    const {
-      car,
-      pickupDate,
-      returnDate,
-      pickupTime,
-      contactNumber,
-      passengerCount,
-      needDriver,
-      specialRequests,
-    } = req.body;
-
-    if (!car || !pickupDate || !returnDate || !contactNumber) {
-      return res.status(400).json({
-        success: false,
-        message: "Car, pickup date, return date, and contact number are required",
-      });
-    }
-
-    const dateRange = normalizeDateRange(pickupDate, returnDate);
-    if (!dateRange) {
-      return res.status(400).json({
-        success: false,
-        message: "Return date must be after pickup date",
-      });
-    }
-
-    await syncCarAvailabilityState(car);
-    const carData = await Car.findById(car);
-    if (!carData) {
-      return res.json({ success: false, message: "Car not found" });
-    }
-
-    if (carData.isListed === false) {
-      return res.json({ success: false, message: "This car is hidden from bookings right now" });
-    }
-
-    if (!carData.isAvailable) {
-      return res.json({
-        success: false,
-        message: carData.unavailableUntil
-          ? `This car is blocked until ${new Date(carData.unavailableUntil).toISOString().split('T')[0]}`
-          : "This car is currently unavailable",
-      });
-    }
-
-    const isAvailable = await checkAvailability(car, dateRange.picked, dateRange.returned);
-    if (!isAvailable) {
-      return res.json({ success: false, message: "Car is not available for the selected dates" });
-    }
-
-    const noOfDays = Math.ceil((dateRange.returned - dateRange.picked) / (1000 * 60 * 60 * 24));
-    const price = carData.pricePerDay * noOfDays;
-
-    await Booking.create({
-      car,
-      owner: carData.owner,
-      user: _id,
-      pickupDate,
-      returnDate,
-      pickupTime: pickupTime || "",
-      contactNumber,
-      passengerCount: passengerCount || null,
-      needDriver: Boolean(needDriver),
-      specialRequests: specialRequests || "",
-      price,
+    const bookingValidation = await validateBookingRequest({
+      userId: _id,
+      bookingInput: req.body,
     });
 
-    await syncCarAvailabilityState(car);
+    if (!bookingValidation.ok) {
+      return res.status(bookingValidation.status).json({
+        success: false,
+        message: bookingValidation.message,
+      });
+    }
 
-    return res.json({ success: true, message: "Booking created successfully" });
+    if (bookingValidation.bookingData.paymentMethod !== "cash") {
+      return res.status(400).json({
+        success: false,
+        message: "Use the online payment flow for card or UPI bookings",
+      });
+    }
+
+    await Booking.create(bookingValidation.bookingData);
+    await syncCarAvailabilityState(bookingValidation.bookingData.car);
+
+    return res.json({
+      success: true,
+      message: "Booking created successfully. Payment will be collected at pickup.",
+    });
   } catch (error) {
     console.log(error.message);
     return res.status(500).json({ success: false, message: error.message });

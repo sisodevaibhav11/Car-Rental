@@ -64,6 +64,11 @@ const MyBookings = () => {
   }
 
   const formatDate = (date) => date ? new Date(date).toISOString().split('T')[0] : '';
+  const formatPaymentMethod = (method) => {
+    if (method === 'upi') return 'UPI';
+    if (method === 'card') return 'Card';
+    return 'Cash';
+  };
 
   return (
 
@@ -171,6 +176,9 @@ const MyBookings = () => {
                 <p className='mt-2'>
                   Booked on {formatDate(booking.createdAt)}
                 </p>
+                <p className='mt-2 capitalize'>
+                  {formatPaymentMethod(booking.paymentMethod)} - {booking.paymentStatus}
+                </p>
               </div>
 
             </div>
@@ -228,6 +236,14 @@ const MyBookings = () => {
                 <p className="mt-1 font-medium">{currency}{selectedBooking.price}</p>
               </div>
               <div className="rounded-xl bg-gray-50 p-4">
+                <p className="text-gray-500">Payment Method</p>
+                <p className="mt-1 font-medium">{formatPaymentMethod(selectedBooking.paymentMethod)}</p>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-4">
+                <p className="text-gray-500">Payment Status</p>
+                <p className="mt-1 font-medium capitalize">{selectedBooking.paymentStatus || 'pending'}</p>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-4">
                 <p className="text-gray-500">Pickup Date</p>
                 <p className="mt-1 font-medium">{formatDate(selectedBooking.pickupDate)}</p>
               </div>
@@ -267,6 +283,12 @@ const MyBookings = () => {
                 <div className="rounded-xl bg-gray-50 p-4 sm:col-span-2">
                   <p className="text-gray-500">Special Requests</p>
                   <p className="mt-1 font-medium">{selectedBooking.specialRequests}</p>
+                </div>
+              )}
+              {selectedBooking.paymentId && (
+                <div className="rounded-xl bg-gray-50 p-4 sm:col-span-2">
+                  <p className="text-gray-500">Payment Reference</p>
+                  <p className="mt-1 font-medium break-all">{selectedBooking.paymentId}</p>
                 </div>
               )}
             </div>

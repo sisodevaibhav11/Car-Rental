@@ -10,6 +10,11 @@ const ManageBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', confirmText: 'Confirm', variant: 'primary', bookingId: null, status: '' });
   const [isUpdating, setIsUpdating] = useState(false);
+  const formatPaymentMethod = (method) => {
+    if (method === 'upi') return 'UPI';
+    if (method === 'card') return 'Card';
+    return 'Cash';
+  };
 
   const fetchOwnerBookings = useCallback(async (silent = false) => {
     try {
@@ -111,7 +116,18 @@ const ManageBookings = () => {
                   <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Vehicle</p>
                   <h3 className="mt-2 text-xl font-semibold text-slate-900">{booking.car.brand} {booking.car.model}</h3>
                   <p className="mt-2 text-sm text-slate-500">{booking.car.location}</p>
-                  <div className="mt-4 inline-flex rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-white">offline payment</div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="inline-flex rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-white">
+                      {formatPaymentMethod(booking.paymentMethod)}
+                    </span>
+                    <span className={`inline-flex rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] ${
+                      booking.paymentStatus === 'paid'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-amber-100 text-amber-700'
+                    }`}>
+                      {booking.paymentStatus || 'pending'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -120,6 +136,9 @@ const ManageBookings = () => {
                 <p className="mt-3 text-lg font-semibold text-slate-900">{booking.pickupDate.split('T')[0]} to {booking.returnDate.split('T')[0]}</p>
                 <p className="mt-2 text-sm text-slate-500">Booking created on {booking.createdAt.split('T')[0]}</p>
                 <p className="mt-4 text-2xl font-semibold text-slate-950">{currency}{booking.price}</p>
+                {booking.paymentId && (
+                  <p className="mt-2 break-all text-xs text-slate-500">Ref: {booking.paymentId}</p>
+                )}
               </div>
 
               <div className="flex flex-col justify-between gap-4">

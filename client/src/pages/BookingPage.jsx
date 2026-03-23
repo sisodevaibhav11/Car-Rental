@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { assets } from '../assets/assets';
 import { useAppContext } from '../context/AppContext';
 import Loader from '../components/Loder';
+import ConfirmModal from '../components/ConfirmModal.jsx';
 
 const BookingPage = () => {
   const { id } = useParams();
@@ -16,8 +17,15 @@ const BookingPage = () => {
   const [passengerCount, setPassengerCount] = useState('');
   const [needDriver, setNeedDriver] = useState('yes');
   const [specialRequests, setSpecialRequests] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingStatus, setBookingStatus] = useState({ loading: true, isBookable: false, message: '' });
+  const [paymentDialog, setPaymentDialog] = useState({
+    open: false,
+    orderId: '',
+    paymentToken: '',
+    amount: 0,
+  });
 
   const rentalDays = useMemo(() => {
     if (!pickupDate || !returnDate) return 0;
@@ -94,7 +102,7 @@ const BookingPage = () => {
 
     try {
       setIsSubmitting(true);
-      const { data } = await axios.post('/api/bookings/create', {
+      const bookingPayload = {
         car: id,
         pickupDate,
         returnDate,
@@ -103,10 +111,61 @@ const BookingPage = () => {
         passengerCount: passengerCount ? Number(passengerCount) : undefined,
         needDriver: needDriver === 'yes',
         specialRequests: specialRequests.trim(),
+        paymentMethod,
+      };
+
+      if (paymentMethod === 'cash') {
+        const { data } = await axios.post('/api/bookings/create', bookingPayload);
+
+        if (data.success) {
+          toast.success(data.message);
+          navigate('/my-bookings');
+        } else {
+          toast.error(data.message);
+        }
+
+        return;
+      }
+
+      const { data } = await axios.post('/api/payment/create-intent', bookingPayload);
+
+      if (data.success) {
+        setPaymentDialog({
+          open: true,
+          orderId: data.payment.orderId,
+          paymentToken: data.payment.paymentToken,
+          amount: data.payment.amount,
+        });
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const confirmOnlinePayment = async () => {
+    try {
+      setIsSubmitting(true);
+      const { data } = await axios.post('/api/payment/confirm', {
+        car: id,
+        pickupDate,
+        returnDate,
+        pickupTime,
+        contactNumber: contactNumber.trim(),
+        passengerCount: passengerCount ? Number(passengerCount) : undefined,
+        needDriver: needDriver === 'yes',
+        specialRequests: specialRequests.trim(),
+        paymentMethod,
+        orderId: paymentDialog.orderId,
+        paymentToken: paymentDialog.paymentToken,
       });
 
       if (data.success) {
         toast.success(data.message);
+        setPaymentDialog({ open: false, orderId: '', paymentToken: '', amount: 0 });
         navigate('/my-bookings');
       } else {
         toast.error(data.message);
@@ -277,6 +336,24 @@ const BookingPage = () => {
                   className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
                 />
               </label>
+
+              <label className="block sm:col-span-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Payment method</span>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                >
+                  <option value="cash">Cash at pickup</option>
+                  <option value="card">Online card payment</option>
+                  <option value="upi">UPI payment</option>
+                </select>
+                <p className="mt-2 text-xs text-slate-500">
+                  {paymentMethod === 'cash'
+                    ? 'Your booking will be created now and payment will be collected at pickup.'
+                    : 'You will complete a secure in-app mock payment confirmation before the booking is created.'}
+                </p>
+              </label>
             </div>
 
             <div className="mt-8 rounded-[1.8rem] bg-slate-950 p-5 text-white">
@@ -288,6 +365,9 @@ const BookingPage = () => {
                 <div>
                   <p className="text-xs uppercase tracking-[0.28em] text-white/45">Estimated total</p>
                   <p className="mt-2 text-4xl font-semibold">{currency}{estimatedTotal}</p>
+                  <p className="mt-2 text-sm text-white/60">
+                    Payment: {paymentMethod === 'cash' ? 'Cash at pickup' : paymentMethod === 'card' ? 'Online card' : 'UPI'}
+                  </p>
                 </div>
                 <p className="max-w-[180px] text-right text-sm text-white/60">Final confirmation depends on availability and reservation review.</p>
               </div>
@@ -305,12 +385,23 @@ const BookingPage = () => {
                   : bookingStatus.loading
                     ? 'Checking Availability...'
                     : bookingStatus.isBookable
-                      ? 'Confirm Booking Request'
+                      ? paymentMethod === 'cash' ? 'Confirm Booking Request' : 'Proceed To Payment'
                       : 'Booking Blocked'}
             </button>
           </motion.form>
         </div>
       </div>
+
+      <ConfirmModal
+        open={paymentDialog.open}
+        title="Confirm online payment?"
+        message={`This simulated payment will charge ${currency}${paymentDialog.amount} via ${paymentMethod === 'card' ? 'card' : 'UPI'} and then create the booking.`}
+        confirmText={isSubmitting ? 'Processing...' : 'Pay Now'}
+        variant="primary"
+        onClose={() => !isSubmitting && setPaymentDialog({ open: false, orderId: '', paymentToken: '', amount: 0 })}
+        onConfirm={confirmOnlinePayment}
+        loading={isSubmitting}
+      />
     </div>
   );
 };
